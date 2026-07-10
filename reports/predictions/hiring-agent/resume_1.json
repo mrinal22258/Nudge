@@ -1,0 +1,54 @@
+{
+  "name": "John Doe",
+  "contact": {
+    "email": "john.doe@example.com",
+    "phone": "555-0100",
+    "links": [
+      "https://github.com/johndoe"
+    ]
+  },
+  "education": [
+    {
+      "institution": "Stanford University",
+      "degree": "Bachelor of Science",
+      "field": "Computer Science",
+      "start_date": "2018-09",
+      "end_date": "2022-06",
+      "gpa": 3.9
+    }
+  ],
+  "experience": [
+    {
+      "company": "Tech Corp",
+      "title": "Software Engineer",
+      "start_date": "July 2022",
+      "end_date": "",
+      "bullets": [
+        "Led a team to rebuild the legacy reporting system"
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "name": "Task Scheduler",
+      "description": "A lightweight distributed job scheduler written in Go.",
+      "tech_stack": [
+        "Go",
+        "Redis",
+        "Docker"
+      ],
+      "links": [
+        "https://github.com/johndoe/task-scheduler"
+      ]
+    }
+  ],
+  "skills": [
+    "Go",
+    "Python",
+    "Docker",
+    "Kubernetes",
+    "Redis",
+    "SQL"
+  ],
+  "open_source_contributions": []
+}

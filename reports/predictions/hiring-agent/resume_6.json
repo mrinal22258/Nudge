@@ -1,0 +1,62 @@
+{
+  "name": "Evan Wright",
+  "contact": {
+    "email": "evan.wright@example.com",
+    "phone": "555-0600",
+    "links": [
+      "https://github.com/evanwright"
+    ]
+  },
+  "education": [
+    {
+      "institution": "University of Michigan",
+      "degree": "BS",
+      "field": "Software Engineering",
+      "start_date": "2017-09",
+      "end_date": "2021-05",
+      "gpa": 3.8
+    }
+  ],
+  "experience": [
+    {
+      "company": "App Builders Inc",
+      "title": "Junior Developer",
+      "start_date": "June 2021",
+      "end_date": "",
+      "bullets": [
+        "Collaborated on 'Fast-Cache' middleware optimization"
+      ]
+    },
+    {
+      "company": "Freelance Contracting",
+      "title": "Full Stack Contractor",
+      "start_date": "December 2022",
+      "end_date": "",
+      "bullets": [
+        "Built responsive React dashboards",
+        "Served 1M requests daily"
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "name": "Fast-Cache (Node.js, Redis, TypeScript)",
+      "description": "Engineered the 'Fast-Cache' middleware library for high-throughput node applications, serving 1M requests daily.",
+      "tech_stack": [
+        "Node.js",
+        "Redis",
+        "TypeScript"
+      ],
+      "links": [
+        "https://github.com/evanwright/fast-cache"
+      ]
+    }
+  ],
+  "skills": [
+    "Node.js",
+    "Redis",
+    "React",
+    "TypeScript"
+  ],
+  "open_source_contributions": []
+}

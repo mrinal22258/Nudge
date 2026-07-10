@@ -1,0 +1,51 @@
+{
+  "name": "Michael Scott",
+  "contact": {
+    "email": "michael.scott@example.com",
+    "phone": "555-1300",
+    "links": [
+      "https://linkedin.com/in/michaelscott"
+    ]
+  },
+  "education": [
+    {
+      "institution": "Scranton High School",
+      "degree": "Diploma in General",
+      "field": "",
+      "start_date": "September 1980",
+      "end_date": "June 1984",
+      "gpa": 3.0
+    }
+  ],
+  "experience": [
+    {
+      "company": "Dunder Mifflin",
+      "title": "Regional Manager",
+      "start_date": "May 2001",
+      "end_date": "Present",
+      "bullets": [
+        "Managed branch operations and drove local paper sales.",
+        "Produced 'Threat-Level-Midnight', an interactive training video project."
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "name": "Threat-Level-Midnight",
+      "description": "Interactive branch safety and sales training video production.",
+      "tech_stack": [
+        "Video Production",
+        "Screenwriting"
+      ],
+      "links": [
+        "https://linkedin.com/in/michaelscott/threat-level-midnight"
+      ]
+    }
+  ],
+  "skills": [
+    "Management",
+    "Sales",
+    "Inspiration"
+  ],
+  "open_source_contributions": []
+}

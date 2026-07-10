@@ -1,0 +1,46 @@
+{
+  "name": "Iris West",
+  "contact": {
+    "email": "iris.west@example.com",
+    "phone": "555-1000",
+    "links": [
+      "https://linkedin.com/in/iriswest"
+    ]
+  },
+  "education": [
+    {
+      "institution": "Central City University",
+      "degree": "BA",
+      "field": "Journalism",
+      "start_date": "2011-09",
+      "end_date": "2015-06",
+      "gpa": 3.7
+    }
+  ],
+  "experience": [
+    {
+      "company": "Central City Picture News",
+      "title": "Investigative Reporter",
+      "start_date": "July 2015",
+      "end_date": "",
+      "bullets": [
+        "Conducted interviews and wrote front-page articles on city incidents",
+        "Managed the digital newsroom archive transition"
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "name": "Digital Newsroom Archive Transition",
+      "description": "Managed the transition of the digital newsroom archive at Central City Picture News.",
+      "tech_stack": [],
+      "links": []
+    }
+  ],
+  "skills": [
+    "Editing",
+    "SEO",
+    "Research"
+  ],
+  "open_source_contributions": []
+}

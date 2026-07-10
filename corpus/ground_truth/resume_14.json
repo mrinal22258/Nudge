@@ -1,0 +1,45 @@
+{
+  "name": "Nancy Drew",
+  "contact": {
+    "email": "nancy.drew@example.com",
+    "phone": "555-1400",
+    "links": [
+      "https://linkedin.com/in/nancydrew"
+    ]
+  },
+  "education": [
+    {
+      "institution": "River Heights College",
+      "degree": "BA",
+      "field": "Criminology",
+      "start_date": "September 2016",
+      "end_date": "June 2019",
+      "gpa": 3.9
+    }
+  ],
+  "experience": [
+    {
+      "company": "Drew Detective Agency",
+      "title": "Private Investigator",
+      "start_date": "July 2019",
+      "end_date": "Present",
+      "bullets": [
+        "Solved local theft and mystery cases.",
+        "Developed open-source tooling for case metadata aggregation."
+      ]
+    }
+  ],
+  "projects": [],
+  "skills": [
+    "Observation",
+    "Logic",
+    "Python"
+  ],
+  "open_source_contributions": [
+    {
+      "repo": "Case-Tracker",
+      "pr_link": "https://github.com/nancydrew/case-tracker",
+      "description": "Contributed case logging utilities. Pull request is active at https://github.com/nancydrew/case-tracker/pull/4 for validation."
+    }
+  ]
+}

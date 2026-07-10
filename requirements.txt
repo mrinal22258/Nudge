@@ -1,0 +1,2 @@
+# Python dependencies for ResumeExtractBench
+# Filled in dynamically as packages are installed.

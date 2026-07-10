@@ -1,0 +1,67 @@
+{
+  "name": "Jane Smith",
+  "contact": {
+    "email": "jane.smith@example.com",
+    "phone": "555-0200",
+    "links": [
+      "https://github.com/janesmith"
+    ]
+  },
+  "education": [
+    {
+      "institution": "MIT",
+      "degree": "Master of Science in Electrical Engineering",
+      "field": "",
+      "start_date": "September 2019",
+      "end_date": "June 2021",
+      "gpa": 4.0
+    },
+    {
+      "institution": "University Name",
+      "degree": "Bachelor of Science",
+      "field": "Computer Science",
+      "start_date": "September 2018",
+      "end_date": "June 2022",
+      "gpa": 3.9
+    }
+  ],
+  "experience": [
+    {
+      "company": "Robo Robotics",
+      "title": "Robotics Developer",
+      "start_date": "August 2021",
+      "end_date": "Present",
+      "bullets": [
+        "Programmed control logic for autonomous vehicles using C++.",
+        "Simulated robotic arms kinematic equations in ROS.",
+        "Implemented real-time sensor fusion algorithms."
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "name": "Lidar Filter",
+      "description": "Point cloud preprocessing tool for LiDAR data.",
+      "tech_stack": [
+        "Python"
+      ],
+      "links": [
+        "https://github.com/janesmith/lidar-filter"
+      ]
+    }
+  ],
+  "skills": [
+    "C++",
+    "ROS",
+    "Python",
+    "Linux",
+    "Robotics"
+  ],
+  "open_source_contributions": [
+    {
+      "repo": "lidar-filter",
+      "pr_link": "https://github.com/janesmith/lidar-filter",
+      "description": "Point cloud preprocessing tool for LiDAR data."
+    }
+  ]
+}

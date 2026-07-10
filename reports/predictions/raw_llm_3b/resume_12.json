@@ -1,0 +1,39 @@
+{
+  "name": "Lois Lane",
+  "contact": {
+    "email": "lois.lane@example.com",
+    "phone": "555-1200",
+    "links": [
+      "https://linkedin.com/in/loislane"
+    ]
+  },
+  "education": [
+    {
+      "institution": "Metropolis University",
+      "degree": "Bachelor of Arts in Journalism",
+      "field": "",
+      "start_date": "September 2005",
+      "end_date": "May 2009",
+      "gpa": 3.9
+    }
+  ],
+  "experience": [
+    {
+      "company": "Daily Planet",
+      "title": "Junior Reporter",
+      "start_date": "September 2008",
+      "end_date": "Present",
+      "bullets": [
+        "Wrote local interest columns while completing senior university year.",
+        "Covered high-profile city alerts."
+      ]
+    }
+  ],
+  "projects": [],
+  "skills": [
+    "Reporting",
+    "Breaking News",
+    "Editing"
+  ],
+  "open_source_contributions": []
+}

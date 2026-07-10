@@ -1,0 +1,157 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ResumeSchema",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Full name of the candidate"
+    },
+    "contact": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "description": "Candidate email address"
+        },
+        "phone": {
+          "type": "string",
+          "description": "Candidate phone number"
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Social links (GitHub, LinkedIn, portfolios, etc.)"
+        }
+      },
+      "required": ["email"]
+    },
+    "education": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "institution": {
+            "type": "string",
+            "description": "Name of school, university, or college"
+          },
+          "degree": {
+            "type": "string",
+            "description": "Degree type (e.g. BS, MS, PhD, High School Diploma)"
+          },
+          "field": {
+            "type": "string",
+            "description": "Field of study (e.g. Computer Science, Mechanical Engineering)"
+          },
+          "start_date": {
+            "type": "string",
+            "description": "Start date of education section"
+          },
+          "end_date": {
+            "type": "string",
+            "description": "End date of education section or 'Present'"
+          },
+          "gpa": {
+            "type": "number",
+            "description": "Grade Point Average (normalized out of 4.0 or raw score)"
+          }
+        },
+        "required": ["institution"]
+      }
+    },
+    "experience": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "company": {
+            "type": "string",
+            "description": "Name of the employer company"
+          },
+          "title": {
+            "type": "string",
+            "description": "Job title/position"
+          },
+          "start_date": {
+            "type": "string",
+            "description": "Employment start date"
+          },
+          "end_date": {
+            "type": "string",
+            "description": "Employment end date or 'Present'"
+          },
+          "bullets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Key bullet points describing responsibilities or achievements"
+          }
+        },
+        "required": ["company", "title"]
+      }
+    },
+    "projects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the project"
+          },
+          "description": {
+            "type": "string",
+            "description": "Summary/details of the project"
+          },
+          "tech_stack": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Technologies, libraries, languages, tools used"
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Links associated with this project"
+          }
+        },
+        "required": ["name"]
+      }
+    },
+    "skills": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "A flat array of professional/technical skills"
+    },
+    "open_source_contributions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "repo": {
+            "type": "string",
+            "description": "Name of the open-source repository"
+          },
+          "pr_link": {
+            "type": "string",
+            "description": "Link to the Pull Request or issue contributed"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the contribution"
+          }
+        },
+        "required": ["repo"]
+      }
+    }
+  },
+  "required": ["name", "contact"]
+}

@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+.env.*
+node_modules/
+corpus/raw/*.pdf
+powershell.cmd
+.agents/
+.gemini/
+OllamaSetup.exe
+uploads/
+db.json

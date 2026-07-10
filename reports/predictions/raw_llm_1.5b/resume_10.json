@@ -1,0 +1,33 @@
+{
+  "name": "Iris West",
+  "contact": {
+    "email": "iris.west@example.com",
+    "phone": "555-1000"
+  },
+  "education": [
+    {
+      "institution": "Central City University",
+      "degree": "BA in Journalism",
+      "field": "Journalism",
+      "start_date": "September 2011",
+      "end_date": "June 2015",
+      "gpa": 3.7
+    }
+  ],
+  "experience": [
+    {
+      "company": "Central City Picture News",
+      "title": "Investigative Reporter",
+      "start_date": "July 2015",
+      "end_date": "Present"
+    }
+  ],
+  "projects": [],
+  "skills": [
+    "Writing",
+    "Editing",
+    "SEO",
+    "Research"
+  ],
+  "open_source_contributions": []
+}

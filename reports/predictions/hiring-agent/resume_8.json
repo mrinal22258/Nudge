@@ -1,0 +1,59 @@
+{
+  "name": "George Costanza",
+  "contact": {
+    "email": "george.c@example.com",
+    "phone": "555-0800",
+    "links": [
+      "https://github.com/gcostanza/importer",
+      "https://github.com/gcostanza/importer"
+    ]
+  },
+  "education": [
+    {
+      "institution": "Queens College",
+      "degree": "Bachelor's degree",
+      "field": "General Studies",
+      "start_date": "1982-09",
+      "end_date": "1986-05",
+      "gpa": 2.5
+    }
+  ],
+  "experience": [
+    {
+      "company": "New York Yankees",
+      "title": "Assistant to the Traveling Secretary",
+      "start_date": "1994-03",
+      "end_date": "1997-05",
+      "bullets": [
+        "Improved travel logistics system",
+        "Code samples available on GitHub"
+      ]
+    },
+    {
+      "company": "Play Now",
+      "title": "Sales Representative",
+      "start_date": "1997-06",
+      "end_date": "1997-09",
+      "bullets": [
+        "Managed corporate accounts",
+        "Transitions managed"
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "name": "Improved travel logistics system",
+      "description": "Improved the existing travel logistics system.",
+      "tech_stack": [
+        "Python",
+        "SQL"
+      ],
+      "links": []
+    }
+  ],
+  "skills": [
+    "Travel Booking",
+    "Negotiation"
+  ],
+  "open_source_contributions": []
+}

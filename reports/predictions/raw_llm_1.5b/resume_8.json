@@ -1,0 +1,46 @@
+{
+  "name": "George Costanza",
+  "contact": {
+    "email": "george.c@example.com",
+    "phone": "555-0800"
+  },
+  "education": [
+    {
+      "institution": "Queens College",
+      "degree": "BA in General Studies",
+      "field": "",
+      "start_date": "September 1982",
+      "end_date": "May 1986",
+      "gpa": 3.9
+    }
+  ],
+  "experience": [
+    {
+      "company": "New York Yankees",
+      "title": "Assistant to the Traveling Secretary",
+      "start_date": "March 1994",
+      "end_date": "May 1997",
+      "bullets": [
+        "Managed hotel bookings and charter flights.",
+        "Improved travel logistics system. Reach me at my github page https://github.com/gcostanza/importer for code samples."
+      ]
+    },
+    {
+      "company": "Play Now",
+      "title": "Sales Representative",
+      "start_date": "June 1997",
+      "end_date": "September 1997",
+      "bullets": [
+        "Handled corporate accounts for playground equipment.",
+        "Managed overlap transitions during Yankees departure."
+      ]
+    }
+  ],
+  "projects": [],
+  "skills": [
+    "Logistics",
+    "Negotiation",
+    "Travel Booking"
+  ],
+  "open_source_contributions": []
+}

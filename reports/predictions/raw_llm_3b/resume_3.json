@@ -1,0 +1,50 @@
+{
+  "name": "Bob Vance",
+  "contact": {
+    "email": "bob.vance@example.com",
+    "phone": "555-0300",
+    "links": [
+      "https://linkedin.com/in/bobvance"
+    ]
+  },
+  "education": [
+    {
+      "institution": "University of Pennsylvania",
+      "degree": "Bachelor of Arts in Economics",
+      "field": "",
+      "start_date": "September 2015",
+      "end_date": "May 2019",
+      "gpa": 3.6
+    }
+  ],
+  "experience": [
+    {
+      "company": "Blue Widgets Inc",
+      "title": "Financial Analyst",
+      "start_date": "June 2019",
+      "end_date": "Present",
+      "bullets": [
+        "Created quarterly financial models and projections.",
+        "Analyzed operational costs and suggested efficiency gains."
+      ]
+    },
+    {
+      "company": "Scranton Consulting",
+      "title": "Independent Consultant",
+      "start_date": "January 2021",
+      "end_date": "Present",
+      "bullets": [
+        "Provided financial consulting to small local retail businesses.",
+        "Streamlined inventory tracking workflows."
+      ]
+    }
+  ],
+  "projects": [],
+  "skills": [
+    "Excel",
+    "Financial Modeling",
+    "Consulting",
+    "SQL"
+  ],
+  "open_source_contributions": []
+}

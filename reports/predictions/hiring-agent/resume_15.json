@@ -1,0 +1,59 @@
+{
+  "name": "Oscar Martinez",
+  "contact": {
+    "email": "oscar.m@example.com",
+    "phone": "555-1500",
+    "links": [
+      "https://github.com/omartinez"
+    ]
+  },
+  "education": [
+    {
+      "institution": "Penn State University",
+      "degree": "Master's Degree",
+      "field": "MBA in Finance",
+      "start_date": "1993-09",
+      "end_date": "1995-06",
+      "gpa": 3.85
+    }
+  ],
+  "experience": [
+    {
+      "company": "Dunder Mifflin",
+      "title": "Senior Accountant",
+      "start_date": "August 1995",
+      "end_date": "",
+      "bullets": [
+        "Designed 'Ledger-Audit', an automated tool for transaction verification."
+      ]
+    },
+    {
+      "company": "Scranton Coalition",
+      "title": "Treasurer",
+      "start_date": "January 2005",
+      "end_date": "",
+      "bullets": [
+        "Applied Ledger-Audit tools for coalition balances."
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "name": "Ledger-Audit (Tech: Python, Pandas)",
+      "description": "Automated ledger checking scripts in Python.",
+      "tech_stack": [
+        "Python",
+        "Pandas"
+      ],
+      "links": [
+        "https://github.com/omartinez/ledger-audit"
+      ]
+    }
+  ],
+  "skills": [
+    "Python",
+    "Pandas",
+    "Auditing"
+  ],
+  "open_source_contributions": []
+}

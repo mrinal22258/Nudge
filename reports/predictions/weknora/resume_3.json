@@ -1,0 +1,70 @@
+{
+  "name": "Bob Vance",
+  "contact": {
+    "email": "bob.vance@example.com",
+    "phone": "555-0300",
+    "links": [
+      "https://linkedin.com/in/bobvance"
+    ]
+  },
+  "education": [
+    {
+      "institution": "University of Pennsylvania",
+      "degree": "Bachelor of Arts",
+      "field": "Economics",
+      "start_date": "September 2015",
+      "end_date": "May 2019",
+      "gpa": 3.6
+    }
+  ],
+  "experience": [
+    {
+      "company": "Blue Widgets Inc",
+      "title": "Financial Analyst",
+      "start_date": "June 2019",
+      "end_date": "Present",
+      "bullets": [
+        "Created quarterly financial models and projections.",
+        "Analyzed operational costs and suggested efficiency gains."
+      ]
+    },
+    {
+      "company": "Scranton Consulting",
+      "title": "Independent Consultant",
+      "start_date": "January 2021",
+      "end_date": "Present",
+      "bullets": [
+        "Provided financial consulting to small local retail businesses.",
+        "Streamlined inventory tracking workflows."
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "name": "Inventory Tracking Workflow Streamlining",
+      "description": "Streamlined inventory tracking workflows for small local retail businesses.",
+      "tech_stack": [],
+      "links": [
+        "https://linkedin.com/in/bobvance"
+      ]
+    }
+  ],
+  "skills": [
+    "Excel",
+    "Financial Modeling",
+    "Consulting",
+    "SQL"
+  ],
+  "open_source_contributions": [
+    {
+      "repo": "blue-widgets-inc-financial-models",
+      "pr_link": "https://github.com/blue-widgets-inc/blue-widgets-inc-financial-models/pull/1",
+      "description": "Created and contributed to the quarterly financial models repository."
+    },
+    {
+      "repo": "scranton-consulting-financial-advisory",
+      "pr_link": "https://github.com/scranton-consulting/scranton-consulting-financial-advisory/pull/1",
+      "description": "Provided contributions to the financial advisory repository."
+    }
+  ]
+}

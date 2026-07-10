@@ -1,0 +1,54 @@
+{
+  "name": "Jane Smith",
+  "contact": {
+    "email": "jane.smith@example.com",
+    "phone": "555-0200",
+    "links": [
+      "https://github.com/janesmith",
+      "https://github.com/janesmith"
+    ]
+  },
+  "education": [
+    {
+      "institution": "MIT",
+      "degree": "Master's Degree",
+      "field": "Master of Science in Electrical Engineering",
+      "start_date": "2019-09",
+      "end_date": "2021-06",
+      "gpa": 4.0
+    }
+  ],
+  "experience": [
+    {
+      "company": "Robo Robotics",
+      "title": "Robotics Developer",
+      "start_date": "August 2021",
+      "end_date": "",
+      "bullets": [
+        "Programmed control logic for autonomous vehicles using C++",
+        "Simulated robotic arms kinematic equations in ROS",
+        "Implemented real-time sensor fusion algorithms"
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "name": "Lidar Filter",
+      "description": "Point cloud preprocessing tool for LiDAR data.",
+      "tech_stack": [
+        "C++",
+        "ROS"
+      ],
+      "links": [
+        "https://github.com/janesmith/lidar-filter"
+      ]
+    }
+  ],
+  "skills": [
+    "C++",
+    "Python",
+    "ROS",
+    "Linux"
+  ],
+  "open_source_contributions": []
+}

@@ -1,0 +1,67 @@
+{
+  "name": "George Costanza",
+  "contact": {
+    "email": "george.c@example.com",
+    "phone": "555-0800",
+    "links": [
+      "https://github.com/gcostanza/importer"
+    ]
+  },
+  "education": [
+    {
+      "institution": "Queens College",
+      "degree": "BA in General Studies",
+      "field": "",
+      "start_date": "September 1982",
+      "end_date": "May 1986",
+      "gpa": 2.5
+    }
+  ],
+  "experience": [
+    {
+      "company": "New York Yankees",
+      "title": "Assistant to the Traveling Secretary",
+      "start_date": "March 1994",
+      "end_date": "May 1997",
+      "bullets": [
+        "Managed hotel bookings and charter flights.",
+        "Improved travel logistics system."
+      ]
+    },
+    {
+      "company": "Play Now",
+      "title": "Sales Representative",
+      "start_date": "June 1997",
+      "end_date": "September 1997",
+      "bullets": [
+        "Handled corporate accounts for playground equipment.",
+        "Managed overlap transitions during Yankees departure."
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "name": "Importer Code Samples",
+      "description": "Code samples for code samples.",
+      "tech_stack": [
+        "Python",
+        "Docker"
+      ],
+      "links": [
+        "https://github.com/gcostanza/importer"
+      ]
+    }
+  ],
+  "skills": [
+    "Logistics",
+    "Negotiation",
+    "Travel Booking"
+  ],
+  "open_source_contributions": [
+    {
+      "repo": "importer",
+      "pr_link": "https://github.com/gcostanza/importer/pull/1",
+      "description": "Code samples for the assistant to the Traveling Secretary position at New York Yankees."
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "name": "Kevin Malone",
+  "contact": {
+    "email": "kevin.malone@example.com",
+    "phone": "555-1100",
+    "links": [
+      "https://github.com/username",
+      "https://linkedin.com/in/kevinmalone"
+    ]
+  },
+  "education": [
+    {
+      "institution": "Penn State University",
+      "degree": "BS in Accounting",
+      "field": "",
+      "start_date": "September 1988",
+      "end_date": "May 1992",
+      "gpa": 2.8
+    }
+  ],
+  "experience": [
+    {
+      "company": "Dunder Mifflin",
+      "title": "Accountant",
+      "start_date": "June 1992",
+      "end_date": "Present",
+      "bullets": [
+        "Ledged and processed invoice reports for the G Balanced branch.",
+        "Implemented 'Keleven' mathematics logic to correct minor account gaps."
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "name": "Project Name",
+      "description": "Short description of the project.",
+      "tech_stack": [
+        "Python",
+        "Docker"
+      ],
+      "links": [
+        "https://github.com/username/project"
+      ]
+    }
+  ],
+  "skills": [
+    "Ledger Management",
+    "Excel",
+    "Data Entry"
+  ],
+  "open_source_contributions": [
+    {
+      "repo": "accounting-logic",
+      "pr_link": "https://github.com/kevinmalone/accounting-logic/pull/1",
+      "description": "Implemented 'Keleven' mathematics logic to correct minor account gaps in the accounting repository."
+    }
+  ]
+}

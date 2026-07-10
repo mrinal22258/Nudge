@@ -1,0 +1,16 @@
+filename,source,layout_type,has_traps
+resume_1.pdf,synthetic,single-column,False
+resume_2.pdf,synthetic,double-column,False
+resume_3.pdf,synthetic,single-column,True
+resume_4.pdf,synthetic,table-based,True
+resume_5.pdf,synthetic,double-column,True
+resume_6.pdf,synthetic,single-column,True
+resume_7.pdf,synthetic,double-column,True
+resume_8.pdf,synthetic,table-based,True
+resume_9.pdf,synthetic,single-column,True
+resume_10.pdf,synthetic,double-column,False
+resume_11.pdf,synthetic,single-column,False
+resume_12.pdf,synthetic,single-column,True
+resume_13.pdf,synthetic,table-based,True
+resume_14.pdf,synthetic,double-column,True
+resume_15.pdf,synthetic,single-column,True

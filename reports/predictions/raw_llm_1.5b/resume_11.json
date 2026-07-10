@@ -1,0 +1,32 @@
+{
+  "name": "Kevin Malone",
+  "contact": {
+    "email": "kevin.malone@example.com",
+    "phone": "555-1100"
+  },
+  "education": [
+    {
+      "institution": "Penn State University",
+      "degree": "BS in Accounting",
+      "field": "Accounting",
+      "start_date": "September 1988",
+      "end_date": "May 1992",
+      "gpa": 3.9
+    }
+  ],
+  "experience": [
+    {
+      "company": "Dunder Mifflin",
+      "title": "Accountant",
+      "start_date": "June 1992",
+      "end_date": "Present"
+    }
+  ],
+  "projects": [],
+  "skills": [
+    "Ledger Management",
+    "Excel",
+    "Data Entry"
+  ],
+  "open_source_contributions": []
+}
