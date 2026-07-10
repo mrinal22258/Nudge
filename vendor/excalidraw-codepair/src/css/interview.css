@@ -1,0 +1,618 @@
+/* Native Excalidraw Style Integration for AI Mock Interview Platform - Light Theme */
+
+@import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&display=swap');
+
+:root {
+  --excalidraw-bg: #f8f9fa;
+  --panel-bg: #ffffff;
+  --border-color: #e0e0e0;
+  --primary-accent: #6965db;
+  --primary-accent-hover: #5854c7;
+  --text-main: #121212;
+  --text-muted: #6b7280;
+  --input-bg: #f3f4f6;
+}
+
+body.interview-app-active {
+  margin: 0;
+  padding: 0;
+  font-family: 'Assistant', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--excalidraw-bg);
+  color: var(--text-main);
+  overflow-x: hidden;
+}
+
+/* MODAL / DIALOG IN EXCALIDRAW PATTERN */
+.excalidraw-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999999;
+}
+
+.excalidraw-dialog-container {
+  width: 100%;
+  max-width: 500px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.excalidraw-dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.2rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.excalidraw-dialog-header h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.excalidraw-dialog-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.2rem;
+}
+
+.excalidraw-dialog-close:hover {
+  color: var(--text-main);
+}
+
+.excalidraw-dialog-body {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+/* FORM ELEMENTS IN EXCALIDRAW PATTERN */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.file-input-wrapper {
+  position: relative;
+  border: 1px dashed var(--border-color);
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+  cursor: pointer;
+  background: var(--input-bg);
+  transition: border-color 0.2s ease;
+}
+
+.file-input-wrapper:hover {
+  border-color: var(--primary-accent);
+}
+
+.file-input-real {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.file-input-label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.text-area-jd {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0.8rem;
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 0.85rem;
+  resize: vertical;
+  min-height: 120px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.text-area-jd:focus {
+  border-color: var(--primary-accent);
+}
+
+.select-type {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0.7rem;
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 0.85rem;
+  outline: none;
+  cursor: pointer;
+}
+
+.select-type:focus {
+  border-color: var(--primary-accent);
+}
+
+.btn-primary {
+  background: var(--primary-accent);
+  border: none;
+  color: white;
+  padding: 0.85rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  width: 100%;
+  font-family: inherit;
+}
+
+.btn-primary:hover {
+  background: var(--primary-accent-hover);
+}
+
+.btn-primary:disabled {
+  background: var(--border-color);
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+/* INTERVIEW BOARD LAYOUT */
+.interview-layout {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  background: var(--excalidraw-bg);
+  overflow: hidden;
+}
+
+.canvas-panel {
+  flex: 1;
+  position: relative;
+  height: 100%;
+}
+
+.dialogue-panel {
+  width: 380px;
+  border-left: 1px solid var(--border-color);
+  background: var(--panel-bg);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+}
+
+.dialogue-header {
+  padding: 1rem 1.2rem;
+  border-bottom: 1px solid var(--border-color);
+  background: #f9fafb;
+}
+
+.dialogue-header h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.question-box {
+  padding: 1rem 1.2rem;
+  background: #ffffff;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--text-main);
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.chat-history {
+  flex: 1;
+  padding: 1.2rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  background: #ffffff;
+}
+
+.chat-message {
+  padding: 0.75rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  max-width: 85%;
+  word-wrap: break-word;
+}
+
+.chat-message.ai {
+  background: #eef2ff;
+  border: 1px solid rgba(105, 101, 219, 0.15);
+  align-self: flex-start;
+  color: var(--text-main);
+}
+
+.chat-message.user {
+  background: #f3f4f6;
+  border: 1px solid var(--border-color);
+  align-self: flex-end;
+  color: var(--text-main);
+}
+
+.typing-indicator {
+  font-style: italic;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  padding: 0.2rem 1.2rem;
+}
+
+.controls-bar {
+  padding: 1rem;
+  background: #f9fafb;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.chat-input-area {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.chat-input {
+  flex: 1;
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 0.6rem 0.8rem;
+  color: var(--text-main);
+  font-size: 0.85rem;
+  outline: none;
+  font-family: inherit;
+}
+
+.chat-input:focus {
+  border-color: var(--primary-accent);
+}
+
+.btn-send {
+  background: var(--primary-accent);
+  border: none;
+  color: white;
+  border-radius: 6px;
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+  font-weight: 600;
+  font-family: inherit;
+  font-size: 0.85rem;
+}
+
+.btn-send:hover {
+  background: var(--primary-accent-hover);
+}
+
+.btn-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-control {
+  flex: 1;
+  padding: 0.6rem 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  background: transparent;
+  color: var(--text-main);
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.btn-control.nudge {
+  border-color: var(--primary-accent);
+  background: rgba(105, 101, 219, 0.05);
+}
+
+.btn-control.nudge:hover {
+  background: rgba(105, 101, 219, 0.15);
+}
+
+.btn-control.end {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.btn-control.end:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+/* DEBRIEF SCREEN */
+.debrief-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100vh;
+  overflow-y: auto;
+  background: var(--excalidraw-bg);
+  padding: 3rem 2rem;
+  box-sizing: border-box;
+}
+
+.debrief-card {
+  width: 100%;
+  max-width: 800px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+  padding: 2.5rem;
+  box-sizing: border-box;
+}
+
+.debrief-header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 1.2rem;
+}
+
+.debrief-header h1 {
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: var(--text-main);
+}
+
+.debrief-header p {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.debrief-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.debrief-section-card {
+  background: var(--input-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.debrief-section-card h3 {
+  margin: 0 0 0.8rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-main);
+  text-transform: capitalize;
+}
+
+.debrief-verdict {
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--text-main);
+}
+
+.citation-tag {
+  display: inline-block;
+  background: rgba(105, 101, 219, 0.1);
+  border: 1px solid rgba(105, 101, 219, 0.2);
+  color: var(--primary-accent);
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-left: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.citation-tag:hover {
+  background: rgba(105, 101, 219, 0.25);
+  transform: scale(1.05);
+}
+
+.btn-restart {
+  background: var(--primary-accent);
+  border: none;
+  color: white;
+  padding: 0.9rem 2.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 2.5rem;
+  align-self: center;
+  font-family: inherit;
+}
+
+.btn-restart:hover {
+  background: var(--primary-accent-hover);
+}
+
+/* IDEAL CANVAS SPLIT UI */
+.debrief-tabs {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.5rem;
+  width: 100%;
+  max-width: 800px;
+}
+
+.debrief-tab-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.debrief-tab-btn:hover {
+  color: var(--text-main);
+}
+
+.debrief-tab-btn.active {
+  color: var(--primary-accent);
+  border-bottom-color: var(--primary-accent);
+}
+
+.ideal-canvas-split {
+  display: flex;
+  width: 100%;
+  max-width: 1200px;
+  height: calc(100vh - 220px);
+  gap: 1.5rem;
+  box-sizing: border-box;
+  margin-top: 1rem;
+}
+
+.ideal-canvas-container {
+  flex: 1;
+  height: 100%;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.ideal-canvas-sidebar {
+  width: 380px;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.ideal-canvas-sidebar h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.sidebar-instructions {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin: 0 0 1.2rem 0;
+}
+
+.linked-gaps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.linked-gap-card {
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--input-bg);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.linked-gap-card:hover {
+  border-color: var(--primary-accent);
+}
+
+.linked-gap-card.highlighted {
+  border-color: var(--primary-accent);
+  box-shadow: 0 0 8px rgba(105, 101, 219, 0.15);
+  background: rgba(105, 101, 219, 0.02);
+}
+
+.linked-gap-card strong {
+  display: block;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  margin-bottom: 0.3rem;
+  color: var(--primary-accent);
+}
+
+.linked-gap-card p {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--text-main);
+}
+
+.gap-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 0.15rem 0.4rem;
+  cursor: pointer;
+  color: var(--text-main);
+}
+
+.gap-badge.active {
+  background: var(--primary-accent);
+  color: white;
+  border-color: var(--primary-accent);
+}
+
+.session-timer-badge {
+  background: var(--input-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-family: monospace;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+

@@ -19,16 +19,27 @@ class LocalDB:
                     "sessions": {},
                     "debriefs": {}
                 }
-                with open(DB_FILE, "w", encoding="utf-8") as f:
-                    json.dump(default_data, f, indent=2)
+                self._write_db(default_data)
 
     def _read_db(self) -> Dict[str, Any]:
         with open(DB_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
 
     def _write_db(self, data: Dict[str, Any]):
-        with open(DB_FILE, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2)
+        import tempfile
+        db_dir = os.path.dirname(DB_FILE)
+        fd, temp_path = tempfile.mkstemp(dir=db_dir, suffix=".tmp")
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2)
+            os.replace(temp_path, DB_FILE)
+        except Exception as e:
+            if os.path.exists(temp_path):
+                try:
+                    os.remove(temp_path)
+                except OSError:
+                    pass
+            raise e
 
     # Candidates CRUD
     def save_candidate(self, candidate_id: str, data: Dict[str, Any]):

@@ -114,18 +114,47 @@ def verify_debrief_citations(session: Dict[str, Any], raw_debrief: Dict[str, Any
             verdict += " (Note: Some ungrounded citations were removed by the verifier.)"
             
         # 2. Semantic grounding check: verify if the cited entries correspond to the section topic
-        # E.g., if the area is 'correctness' or 'edge_cases', the cited indices should contain code or canvas drawings
         final_citations = []
         for c in valid_citations:
             entry = next((e for e in transcript if e["index"] == c), None)
             if entry:
-                # Add basic heuristic grounding
-                if area in ["correctness", "edge_cases"] and entry["type"] == "canvas":
-                    final_citations.append(c)
-                elif area == "communication" and entry["type"] in ["ai", "user"]:
-                    final_citations.append(c)
-                else:
-                    # Let it pass but flag it or allow standard dialogue citations
+                content_lower = (entry.get("content") or "").lower()
+                entry_type = entry.get("type")
+                is_valid_semantic = False
+                
+                if area == "correctness":
+                    # Must be a canvas sketch or user message showing code
+                    if entry_type == "canvas":
+                        is_valid_semantic = True
+                    elif entry_type == "user":
+                        code_keywords = ["def ", "class ", "function", "const ", "let ", "var ", "return", "{", "}", "import", "code", "implement", "js", "ts", "python"]
+                        if any(kw in content_lower for kw in code_keywords):
+                            is_valid_semantic = True
+                            
+                elif area == "edge_cases":
+                    # Must mention edge case keywords or be canvas drawing
+                    if entry_type == "canvas":
+                        is_valid_semantic = True
+                    elif entry_type == "user":
+                        edge_keywords = ["edge", "null", "empty", "bound", "limit", "overflow", "error", "check", "scale", "size", "capacity", "handle", "zero", "negative"]
+                        if any(kw in content_lower for kw in edge_keywords):
+                            is_valid_semantic = True
+                            
+                elif area == "communication":
+                    # Must be actual dialogue (user or AI text), not raw canvas serialization
+                    if entry_type in ["user", "ai"]:
+                        is_valid_semantic = True
+                        
+                elif area == "problem_solving":
+                    # User dialogue showing strategy or canvas
+                    if entry_type == "canvas":
+                        is_valid_semantic = True
+                    elif entry_type == "user":
+                        solve_keywords = ["approach", "solve", "design", "idea", "first", "then", "strategy", "complexity", "o(", "big o", "optimize", "improve", "analyse", "breakdown"]
+                        if any(kw in content_lower for kw in solve_keywords):
+                            is_valid_semantic = True
+                
+                if is_valid_semantic:
                     final_citations.append(c)
                     
         # If a section ends up with NO citations, we flag it as 'unverified'

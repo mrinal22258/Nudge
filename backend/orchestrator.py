@@ -11,7 +11,7 @@ if PROJECT_ROOT not in sys.path:
 
 from backend.database import db
 from backend.parser import parse_resume_file, parse_jd_text, build_gap_profile
-from backend.weknora_bank import retrieve_question, QUESTION_BANK, retrieve_top_questions, generate_dynamic_question
+from backend.weknora_bank import retrieve_top_questions, generate_dynamic_question
 
 class SessionOrchestrator:
     @staticmethod
@@ -44,9 +44,15 @@ class SessionOrchestrator:
         }
         db.save_job_target(target_id, target_data)
         
-        # 4. Dynamic Question Generation
-        print(f"[Orchestrator] Dynamically generating target question for type {interview_type}...")
-        question = generate_dynamic_question(resume_structured, jd_structured, gap_profile, interview_type)
+        # 4. Scenario Question Retrieval (WeKnora matching)
+        print(f"[Orchestrator] Retrieving top matching scenario questions for type {interview_type}...")
+        matched_questions = retrieve_top_questions(gap_profile, interview_type, limit=3)
+        if not matched_questions:
+            # Fallback dynamic generation if bank has no match
+            dynamic_q = generate_dynamic_question(resume_structured, jd_structured, gap_profile, interview_type)
+            matched_questions = [dynamic_q]
+            
+        question = matched_questions[0]
         
         # 5. Initialize Session
         session_id = str(uuid.uuid4())
@@ -58,7 +64,7 @@ class SessionOrchestrator:
             "question_topic": question["topic"],
             "question_prompt": question["prompt_text"],
             "question_details": question,
-            "matched_questions": [question],
+            "matched_questions": matched_questions,
             "current_question_index": 0,
             "status": "setup",
             "transcript": [],

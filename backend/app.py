@@ -21,20 +21,43 @@ from backend.interviewer import generate_interviewer_turn
 from backend.debrief_verifier import generate_and_verify_debrief
 from backend.ideal_answer import IdealAnswerGenerator
 
-# Create FastAPI app
-app = FastAPI(title="Live AI Mock Interview Platform API")
+# Configure CORS to allow frontend connections (restrict to localhost dev ports)
+origins = [
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173",
+]
 
-# Configure CORS to allow frontend connections
+# Lifespan event manager to handle inactivity background task
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Start inactivity monitor background task
+    monitor_task = asyncio.create_task(monitor_inactivity())
+    print("[Nudge] Inactivity monitor background task started successfully.")
+    yield
+    # Cleanup task on shutdown
+    monitor_task.cancel()
+    try:
+        await monitor_task
+    except asyncio.CancelledError:
+        pass
+    print("[Nudge] Inactivity monitor background task stopped.")
+
+app = FastAPI(title="Live AI Mock Interview Platform API", lifespan=lifespan)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # Setup Socket.io Server
-sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins="*")
+sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins=origins)
 socket_app = socketio.ASGIApp(sio, other_asgi_app=app)
 
 # Local storage for file uploads
@@ -59,7 +82,9 @@ async def create_session(
             shutil.copyfileobj(resume.file, buffer)
 
         # Call orchestrator to build session
-        session_data = SessionOrchestrator.create_session(resume_path, jd, interview_type)
+        session_data = await asyncio.to_thread(
+            SessionOrchestrator.create_session, resume_path, jd, interview_type
+        )
         return session_data
     except Exception as e:
         traceback.print_exc()
@@ -88,7 +113,7 @@ async def get_debrief(session_id: str):
         # Trigger debrief generation & verification pass
         sess["status"] = "debriefing"
         db.save_session(session_id, sess)
-        debrief = generate_and_verify_debrief(session_id)
+        debrief = await asyncio.to_thread(generate_and_verify_debrief, session_id)
         sess["status"] = "ready"
         db.save_session(session_id, sess)
         
@@ -103,7 +128,7 @@ async def get_ideal_answer(session_id: str):
         
     plan = sess.get("ideal_answer_plan")
     if not plan:
-        plan = IdealAnswerGenerator.generate_plan(session_id)
+        plan = await asyncio.to_thread(IdealAnswerGenerator.generate_plan, session_id)
         sess["ideal_answer_plan"] = plan
         db.save_session(session_id, sess)
         
@@ -219,7 +244,7 @@ async def user_message(sid, data):
         
         # Trigger AI interviewer turn
         await sio.emit("ai-status", {"status": "typing"}, room=room_id)
-        ai_turn = generate_interviewer_turn(session_id)
+        ai_turn = await asyncio.to_thread(generate_interviewer_turn, session_id)
         SessionOrchestrator.add_transcript_entry(session_id, "ai", ai_turn)
         await sio.emit("ai-message", {"content": ai_turn, "timestamp": datetime.now().isoformat()}, room=room_id)
 
@@ -232,7 +257,7 @@ async def request_nudge(sid, data):
     if session_id:
         session_activity[session_id] = datetime.now()
         await sio.emit("ai-status", {"status": "typing"}, room=room_id)
-        nudge_text = generate_interviewer_turn(session_id, is_nudge=True)
+        nudge_text = await asyncio.to_thread(generate_interviewer_turn, session_id, is_nudge=True)
         SessionOrchestrator.add_transcript_entry(session_id, "ai", nudge_text)
         await sio.emit("ai-message", {"content": nudge_text, "timestamp": datetime.now().isoformat()}, room=room_id)
 
@@ -276,15 +301,9 @@ async def monitor_inactivity():
             session_activity[sess_id] = datetime.now()
             
             # Generate and emit nudge
-            nudge = generate_interviewer_turn(sess_id, is_nudge=True)
+            nudge = await asyncio.to_thread(generate_interviewer_turn, sess_id, is_nudge=True)
             SessionOrchestrator.add_transcript_entry(sess_id, "ai", nudge)
             await sio.emit("ai-message", {"content": nudge, "timestamp": datetime.now().isoformat()}, room=sess_id)
-
-@app.on_event("startup")
-async def startup_event():
-    # Inactivity monitoring loop disabled as requested by candidate
-    # asyncio.create_task(monitor_inactivity())
-    pass
 
 if __name__ == "__main__":
     uvicorn.run(socket_app, host="0.0.0.0", port=3002)

@@ -1,1 +1,0 @@
-# Extractors package for ResumeExtractBench
