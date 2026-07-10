@@ -1,6 +1,6 @@
 # Architectural Decisions Log
 
-This document records the architectural and design decisions made during the construction of ResumeExtractBench.
+This document records the architectural and design decisions made during the construction of Nudge.
 
 ## Initial Decisions
 

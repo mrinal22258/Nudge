@@ -1,106 +1,127 @@
-# ResumeExtractBench
+# Nudge: AI-Powered Whiteboard Mock Interview Simulator
 
-A deterministic, visually-audited benchmark harness for structured resume/CV extraction pipelines. This benchmark runs locally against Ollama, evaluates pipelines using leaf accuracy and row precision/recall, and produces hand-drawn (Nudge-style) annotated visual overlays of the source PDFs to audit parser errors.
-
-## 1. Project Scaffold
-
-* **`corpus/`**: Contains the evaluation corpus.
-  * `raw/`: 15 synthetic PDF resumes generated using ReportLab, covering various layout styles (single-column, double-column, table-based).
-  * `ground_truth/`: Schema-conforming ground-truth JSON files for each resume.
-  * `manifest.csv`: Lists filename, layout type, and active traps.
-* **`schema/`**: Target JSON Schema for resume extraction.
-  * `resume_schema.json`: Target data model.
-  * `TRAPS.md`: Details the three evaluation traps (overlapping dates, duplicate project entries, and embedded organization links).
-* **`extractors/`**: Python modules wrapping the evaluated pipelines.
-  * `hiring_agent_extractor.py`: Wrapper for the section-wise `hiring-agent` pipeline.
-  * `weknora_extractor.py`: A local section-specific Retrieval-Augmented Generation (RAG) extraction pipeline.
-  * `raw_llm_extractor.py`: Direct single-shot prompt baseline comparison for both `qwen2.5:1.5b` and `qwen2.5:3b`.
-* **`grading/`**:
-  * `grader.py`: Computes deterministic leaf accuracy, precision, and recall, and traces structural differences.
-  * `test_grader.py`: Unit tests validating the grading logic.
-* **`overlay/`**:
-  * `render_overlay.py`: PDF rendering and Excalidraw-style wobbly bounding box overlay annotations.
-* **`reports/`**:
-  * `results.jsonl`: Detail of all 60 benchmark runs.
-  * `predictions/`: Raw JSON files output by each extractor pipeline.
-  * `overlays/`: Color-coded PNG visual audits of the resumes.
-  * `REPORT.md`: Aggregate summary report and findings.
-* **`vendor/`**: Cloned upstream reference repositories (read-only).
+Nudge is a premium, privacy-focused, local-first mock interview simulator designed to test candidates on whiteboard problem-solving. By leveraging local LLMs (Ollama) and real-time canvas serialization, Nudge provides a high-fidelity mock interview experience across multiple technical and business domains.
 
 ---
 
-## 2. Benchmark Findings & Performance
+## 1. Core Product Features
 
-Detailed analysis is available in [reports/REPORT.md](file:///c:/Users/krmri/OneDrive/Desktop/project/reports/REPORT.md). A summary of metrics across 15 resumes:
+### 🎯 Multi-Scenario Interview Tracks
+Nudge moves beyond standard software engineering loops to support multiple career tracks:
+- **Coding**: Algorithmic problem-solving with live whiteboard canvas coding.
+- **System Design**: Visual block diagram design (Databases, Load Balancers, API Gateways, Caches).
+- **Behavioral**: Situational leadership, conflict resolution, and communication mock interviews.
+- **Finance**: Quantitative math, capital structures, and portfolio design challenges.
+- **AI Engineering**: Neural network architectures, fine-tuning configurations, and model deployment pipelines.
+- **Product Management**: Product strategy, wireframing, feature prioritization, and roadmap designs.
 
-| Pipeline | Leaf Accuracy | Precision | Recall | Avg Latency |
-| --- | --- | --- | --- | --- |
-| **hiring-agent** (3b) | 65.83% | 0.8178 | 0.9611 | ~19.1s |
-| **weknora** (3b, RAG) | 84.84% | 0.6233 | 1.0000 | ~25.6s |
-| **raw_llm_3b** (3b, Single-Shot) | **87.42%** | 0.9478 | 1.0000 | ~14.2s |
-| **raw_llm_1.5b** (1.5b, Control) | 78.92% | **1.0000** | 1.0000 | **~7.0s** |
+### 🔎 Resume & JD Target Matcher (WeKnora Cosine Similarity)
+- Candidates upload their resume as a PDF and paste the target job description (JD).
+- The backend parses candidate competencies, identifies technical gaps, and queries a curated bank of **34 scenario-based questions** using TF-IDF cosine similarity.
+- The top 3 matching scenarios are loaded as a customized interview track.
 
-### Key Architectural Findings:
-* **The Context Size Bottleneck**: The `hiring-agent` provider defaults to a `32768` context window. On local, memory-constrained hardware (e.g. laptop GPUs like the RTX 3050), this causes massive VRAM paging, slowing inference down by **4.35x**. Limiting `num_ctx` to `4096` (which comfortably fits resumes) restores token generation to ~31.5 tokens/sec.
-* **Section-wise Tradeoffs**: Segmenting resumes into 6 sequential sections (done in `hiring-agent` and WeKnora) provides clean prompts but introduces a **6x latency multiplier**.
-* **Model Size Impact**: Moving from `1.5b` to `3b` parameters yields a massive leap in leaf accuracy (+8.5%) on direct baseline extraction.
+### 🎨 Live Whiteboard Canvas Integration
+- An interactive whiteboard canvas built on a custom React package (`vendor/excalidraw-codepair`).
+- Every 2 seconds, the client serializes drawings, text, arrows, and blocks into structural ASCII representations and sends them to the local LLM.
+- The AI interviewer actively "reads" your drawings and answers in real-time.
+
+### 📊 Citation-Backed Performance Scorecard
+- Evaluates the final transcript across four dimensions: **Problem Solving**, **Communication**, **Correctness**, and **Edge Cases**.
+- Generates a STAR-method performance scorecard.
+- **Strict Anti-Hallucination Guardrails**: Evaluates *only* what the candidate typed in chat or drew on the whiteboard. Every feedback point features a clickable timeline citation pointing back to the transcript events.
+
+### 💡 Ideal Answer Reference Canvas
+- Upon completing a scenario, candidates unlock a split-screen view containing the **Ideal Answer**.
+- System Design tracks render database blocks, queues, and gateways. Coding tracks render fully written reference implementations.
 
 ---
 
-## 3. How to Run the Benchmark
+## 2. Project Architecture Summary
 
-Ensure you have a local Ollama instance running. If needed, pull the model weights first:
-```powershell
-ollama pull qwen2.5:1.5b
+```
+project/
+├── backend/
+│   ├── app.py                # FastAPI server, API routing, and Socket.io events
+│   ├── database.py           # Local file-based database controller (db.json CRUD)
+│   ├── interviewer.py        # System prompt orchestrator for the AI Interviewer turn loop
+│   ├── debrief_verifier.py   # AI STAR-method evaluation verifier with strict grounding
+│   ├── ideal_answer.py       # LLM reference canvas structure planner
+│   ├── parser.py             # PDF text parser for resume uploads
+│   └── weknora_bank.py       # 34-question seed bank with TF-IDFCosine matching
+│
+├── vendor/excalidraw-codepair/
+│   ├── src/
+│   │   ├── components/
+│   │   │   └── InterviewApp.tsx   # React Frontend: setup, live whiteboard, and scorecard
+│   │   └── utils/
+│   │       ├── serializeCanvas.ts  # Serializes shapes & lines to plain text
+│   │       └── idealCanvas.ts      # Draws reference solutions on the canvas
+│   └── index.html             # Main entry page branded with Nudge titles
+│
+└── db.json                   # Local JSON database for profiles, sessions, and transcripts
+```
+
+---
+
+## 3. Setup & Local Installation
+
+### Prerequisites
+1. **Python 3.10+**
+2. **Node.js 18+**
+3. **Ollama**: Download and install [Ollama](https://ollama.com/) locally.
+
+Once Ollama is running, pull the Qwen model weights:
+```bash
 ollama pull qwen2.5:3b
 ```
 
-To run the entire suite from scratch:
+### Installation
 
-1. **Active Virtual Environment**:
-   ```powershell
-   .venv\Scripts\activate
+1. **Clone the Repository** (ensure submodules are initialized):
+   ```bash
+   git clone --recursive <repository-url>
+   cd project
    ```
 
-2. **Execute Benchmark Runner**:
-   This runs all 60 evaluations, sequentially grouping models to prevent VRAM overlapping and freeing VRAM between transitions:
-   ```powershell
-   python scripts/run_benchmark.py
+2. **Backend Setup**:
+   Create a virtual environment and install dependencies:
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate  # On Windows use: .venv\Scripts\activate
+   pip install -r requirements.txt
    ```
 
-3. **Generate Visual Overlays**:
-   Renders the wobbly annotated audit pages in `reports/overlays/`:
-   ```powershell
-   python overlay/render_overlay.py
-   ```
-
-4. **Compile Report**:
-   Generates the markdown summary:
-   ```powershell
-   python scripts/generate_report.py
+3. **Frontend Setup**:
+   Install dependencies inside the excalidraw directory:
+   ```bash
+   npm install --prefix vendor/excalidraw-codepair
    ```
 
 ---
 
-## 4. Play and Test with Individual Extractors
+## 4. How to Run Locally
 
-You can inspect or run individual extractors manually on any PDF resume.
+1. **Start Ollama**:
+   Ensure Ollama is running in the background.
+   ```bash
+   ollama serve
+   ```
 
-### Run WeKnora RAG Extractor:
-```python
-from extractors.weknora_extractor import extract
-import json
+2. **Run Backend API Server**:
+   ```bash
+   python backend/app.py
+   ```
+   The backend server runs on `http://localhost:3002`.
 
-# Extract details from any resume PDF
-result = extract("corpus/raw/resume_1.pdf", schema={})
-print(json.dumps(result, indent=2))
-```
+3. **Run Frontend Web App**:
+   ```bash
+   npm run start --prefix vendor/excalidraw-codepair
+   ```
+   The web application will open on `http://localhost:3000`.
 
-### Run direct Raw LLM Baseline:
-```python
-from extractors.raw_llm_extractor import extract
-import json
+---
 
-result = extract("corpus/raw/resume_1.pdf", schema={}, model_name="qwen2.5:3b")
-print(json.dumps(result, indent=2))
-```
+## 5. Security & Privacy Guidelines
+- **Zero Cloud Storage**: All PDF resumes, interview transcripts, and session databases are stored locally inside `db.json` and `uploads/`. No personal data is sent to external servers.
+- **End-to-End Encryption**: Real-time canvas sharing is secured using a randomly generated 22-character encryption key stored in the URL hash.
+- **Community placeholders**: All community redirected channels (Discord, Twitter/X, GitHub issues) are placeholder dialogs protecting internal workflows.
