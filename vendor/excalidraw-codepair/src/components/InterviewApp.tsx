@@ -59,7 +59,9 @@ export default function InterviewApp() {
   const canvasTimeoutRef = useRef<any>(null);
 
   const handleCanvasChange = (elements: readonly any[]) => {
-    if (screen !== "interview") return;
+    if (screen !== "interview") {
+      return;
+    }
 
     if (canvasTimeoutRef.current) {
       clearTimeout(canvasTimeoutRef.current);
@@ -72,8 +74,8 @@ export default function InterviewApp() {
         if (socketRef.current) {
           socketRef.current.emit("canvas_update", {
             roomId: sessionId,
-            sessionId: sessionId,
-            serialized: serialized,
+            sessionId,
+            serialized,
           });
         }
       }
@@ -424,9 +426,10 @@ export default function InterviewApp() {
         {/* Left Side: Excalidraw Whiteboard Canvas (Always active and visible!) */}
         <div className="canvas-panel">
           <Excalidraw
+            key={canvasKey}
             ref={excalidrawRef}
             onChange={handleCanvasChange}
-            theme="dark"
+            theme="light"
           />
         </div>
 
@@ -781,14 +784,28 @@ export default function InterviewApp() {
                 const vLower = (verdict || "").toLowerCase();
                 if (
                   vLower.includes("left blank") ||
+                  vLower.includes("no code") ||
+                  vLower.includes("no diagram") ||
+                  vLower.includes("no drawing") ||
+                  vLower.includes("nothing to evaluate") ||
+                  vLower.includes("nothing to analyze") ||
+                  vLower.includes("not present") ||
+                  vLower.includes("empty") ||
+                  vLower.includes("missing") ||
+                  vLower.includes("none provided") ||
+                  vLower.includes("did not submit") ||
+                  vLower.includes("was not provided") ||
+                  vLower.includes("unable to verify") ||
+                  vLower.includes("no proof") ||
+                  vLower.includes("no evidence") ||
+                  vLower.includes("no solution") ||
+                  vLower.includes("without a solution") ||
+                  vLower.includes("blank") ||
                   vLower.includes("no code was written") ||
                   vLower.includes("did not provide") ||
                   vLower.includes("could not be verified") ||
                   vLower.includes("failed to") ||
-                  vLower.includes("did not address") ||
-                  vLower.includes("no solution") ||
-                  vLower.includes("without a solution") ||
-                  vLower.includes("blank")
+                  vLower.includes("did not address")
                 ) {
                   return {
                     label: "CRITICAL GAP",
@@ -1209,182 +1226,354 @@ export default function InterviewApp() {
             className="ideal-canvas-split"
             style={{
               display: "flex",
-              flexDirection: "column",
-              gap: "1.5rem",
-              height: "100%",
-              overflowY: "auto",
+              flexDirection: "row",
+              gap: "2rem",
+              height: "calc(100vh - 180px)",
+              minHeight: "750px",
               padding: "1.5rem",
-              width: "100%",
               boxSizing: "border-box",
+              width: "100%",
             }}
           >
-            {/* Top Section: Scenario Question and Reference Solution Overview */}
+            {/* Left Side: Solutions & Performance Gaps Sidebar (45%) */}
             <div
               style={{
-                padding: "1.5rem",
-                background: "rgba(255, 255, 255, 0.03)",
-                border: "1px solid var(--border-color)",
-                borderRadius: "12px",
+                flex: "0 0 45%",
+                display: "flex",
+                flexDirection: "column",
+                gap: "1.5rem",
+                overflowY: "auto",
+                paddingRight: "0.5rem",
+                boxSizing: "border-box",
               }}
             >
-              <h2
-                style={{
-                  fontSize: "1.3rem",
-                  color: "#a5b4fc",
-                  marginBottom: "0.5rem",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.5rem",
-                  marginTop: 0,
-                }}
-              >
-                🎯 Scenario Challenge: {questionTopic}
-              </h2>
+              {/* Scenario & Prompt Info */}
               <div
                 style={{
-                  fontSize: "0.95rem",
-                  color: "#d1d5db",
-                  background: "rgba(0, 0, 0, 0.25)",
-                  padding: "1rem",
-                  borderRadius: "8px",
-                  lineHeight: "1.5",
-                  marginBottom: "1.5rem",
+                  padding: "1.2rem",
+                  background: "rgba(255, 255, 255, 0.03)",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                  borderRadius: "12px",
                 }}
               >
-                <strong>Whiteboard Prompt:</strong> {questionPrompt}
+                <h2
+                  style={{
+                    fontSize: "1.2rem",
+                    color: "#a5b4fc",
+                    margin: "0 0 0.5rem 0",
+                    fontWeight: 700,
+                  }}
+                >
+                  🎯 Scenario: {questionTopic}
+                </h2>
+                <p
+                  style={{
+                    fontSize: "0.85rem",
+                    color: "#d1d5db",
+                    margin: 0,
+                    lineHeight: "1.4",
+                  }}
+                >
+                  <strong>Challenge:</strong> {questionPrompt}
+                </p>
               </div>
+
+              {/* Ideal Reference Blocks */}
               {idealAnswerPlan &&
                 idealAnswerPlan.blocks &&
                 idealAnswerPlan.blocks.length > 0 && (
-                  <div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
                     <h3
                       style={{
-                        fontSize: "1.05rem",
+                        fontSize: "1rem",
                         color: "#c7d2fe",
-                        marginBottom: "0.8rem",
-                        marginTop: 0,
+                        margin: "0.5rem 0 0 0",
+                        fontWeight: 700,
                       }}
                     >
-                      📖 Ideal Answer Reference Solutions
+                      📖 Ideal Answer Components
                     </h3>
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "1rem",
-                      }}
-                    >
-                      {idealAnswerPlan.blocks.map(
-                        (block: any, bIdx: number) => (
+                    {idealAnswerPlan.blocks.map((block: any, bIdx: number) => {
+                      const hasGapLink = block.addresses_gap !== null && block.addresses_gap !== undefined;
+                      const isHighlighted = highlightedGap === block.addresses_gap;
+                      return (
+                        <div
+                          key={bIdx}
+                          onClick={() => {
+                            if (hasGapLink) {
+                              setHighlightedGap(block.addresses_gap);
+                              if (excalidrawRef.current) {
+                                const elements = excalidrawRef.current.getSceneElements();
+                                const matchingEl = elements.find(
+                                  (el: any) => el.customAddressesGap === block.addresses_gap
+                                );
+                                if (matchingEl) {
+                                  excalidrawRef.current.updateScene({
+                                    appState: {
+                                      selectedElementIds: {
+                                        [matchingEl.id]: true
+                                      }
+                                    }
+                                  });
+                                }
+                              }
+                            }
+                          }}
+                          style={{
+                            background: block.type === "code" ? "#1e1e1e" : "rgba(255, 255, 255, 0.02)",
+                            border: isHighlighted 
+                              ? "2px solid #6965db" 
+                              : "1px solid rgba(255, 255, 255, 0.08)",
+                            borderRadius: "8px",
+                            padding: "1rem",
+                            cursor: hasGapLink ? "pointer" : "default",
+                            transition: "all 0.2s ease-in-out",
+                            transform: isHighlighted ? "scale(1.01)" : "none",
+                            boxShadow: isHighlighted ? "0 4px 12px rgba(105, 101, 219, 0.2)" : "none",
+                          }}
+                        >
                           <div
-                            key={bIdx}
                             style={{
-                              background: "rgba(255, 255, 255, 0.02)",
-                              border: "1px solid rgba(255, 255, 255, 0.05)",
-                              borderRadius: "8px",
-                              padding: "1rem",
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              marginBottom: "0.5rem",
                             }}
                           >
-                            <div
+                            <span style={{ color: "#c7d2fe", fontSize: "0.9rem", fontWeight: "bold" }}>
+                              {block.title || `Part ${bIdx + 1}`}
+                            </span>
+                            <span
                               style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                marginBottom: "0.5rem",
+                                fontSize: "0.7rem",
+                                background: block.type === "code" 
+                                  ? "rgba(156, 220, 254, 0.15)" 
+                                  : "rgba(105, 101, 219, 0.15)",
+                                color: block.type === "code" ? "#9cdcfe" : "#a5b4fc",
+                                padding: "0.15rem 0.4rem",
+                                borderRadius: "4px",
+                                fontWeight: "bold",
+                                textTransform: "uppercase",
                               }}
                             >
-                              <strong
-                                style={{
-                                  color: "#c7d2fe",
-                                  fontSize: "0.95rem",
-                                }}
-                              >
-                                {block.title || `Block #${bIdx + 1}`}
-                              </strong>
-                              <span
-                                style={{
-                                  fontSize: "0.75rem",
-                                  background: "rgba(105, 101, 219, 0.2)",
-                                  color: "#a5b4fc",
-                                  padding: "0.2rem 0.5rem",
-                                  borderRadius: "4px",
-                                  fontWeight: "bold",
-                                }}
-                              >
-                                {block.type.toUpperCase()}
-                              </span>
-                            </div>
-                            {block.type === "code" ? (
-                              <pre
-                                style={{
-                                  margin: 0,
-                                  padding: "0.8rem",
-                                  background: "#1e1e1e",
-                                  color: "#9cdcfe",
-                                  borderRadius: "6px",
-                                  overflowX: "auto",
-                                  fontSize: "0.85rem",
-                                  fontFamily: "monospace",
-                                }}
-                              >
-                                <code>{block.content}</code>
-                              </pre>
-                            ) : (
-                              <p
-                                style={{
-                                  margin: 0,
-                                  fontSize: "0.9rem",
-                                  color: "#e5e7eb",
-                                  lineHeight: "1.4",
-                                  whiteSpace: "pre-wrap",
-                                }}
-                              >
-                                {block.content}
-                              </p>
-                            )}
-                            {block.addresses_gap !== null &&
-                              block.addresses_gap !== undefined && (
-                                <div
-                                  style={{
-                                    marginTop: "0.5rem",
-                                    fontSize: "0.8rem",
-                                    color: "#f87171",
-                                    fontWeight: "bold",
-                                  }}
-                                >
-                                  ⚠️ Addresses Citation Gap #
-                                  {block.addresses_gap}
-                                </div>
-                              )}
+                              {block.type}
+                            </span>
                           </div>
-                        ),
-                      )}
-                    </div>
+
+                          {block.type === "code" ? (
+                            <pre
+                              style={{
+                                margin: 0,
+                                padding: "0.6rem",
+                                background: "#111111",
+                                color: "#9cdcfe",
+                                borderRadius: "4px",
+                                overflowX: "auto",
+                                fontSize: "0.8rem",
+                                fontFamily: "monospace",
+                                border: "1px solid rgba(255, 255, 255, 0.05)",
+                              }}
+                            >
+                              <code>{block.content}</code>
+                            </pre>
+                          ) : (
+                            <p
+                              style={{
+                                margin: 0,
+                                fontSize: "0.85rem",
+                                color: "#d1d5db",
+                                lineHeight: "1.4",
+                                whiteSpace: "pre-wrap",
+                              }}
+                            >
+                              {block.content}
+                            </p>
+                          )}
+
+                          {hasGapLink && (
+                            <div
+                              style={{
+                                marginTop: "0.5rem",
+                                fontSize: "0.75rem",
+                                color: "#f87171",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "0.25rem",
+                                fontWeight: "bold",
+                              }}
+                            >
+                              ⚠️ Identifies Gap Cite #{block.addresses_gap} (Click to view)
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
+
+              {/* Linked Gaps List */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                <h3
+                  style={{
+                    fontSize: "1rem",
+                    color: "#c7d2fe",
+                    margin: "0.5rem 0 0 0",
+                    fontWeight: 700,
+                  }}
+                >
+                  🔗 Candidate Gap Alignment
+                </h3>
+                {debriefSections.map((section, idx) => {
+                  const hasActiveBadge = section.citations.includes(
+                    highlightedGap as number,
+                  );
+                  return (
+                    <div
+                      key={idx}
+                      onClick={() => {
+                        if (section.citations.length > 0) {
+                          const targetGap = section.citations[0];
+                          setHighlightedGap(targetGap);
+                          if (excalidrawRef.current) {
+                            const elements = excalidrawRef.current.getSceneElements();
+                            const matchingEl = elements.find(
+                              (el: any) => el.customAddressesGap === targetGap,
+                            );
+                            if (matchingEl) {
+                              excalidrawRef.current.updateScene({
+                                appState: {
+                                  selectedElementIds: {
+                                    [matchingEl.id]: true,
+                                  },
+                                },
+                              });
+                            }
+                          }
+                        }
+                      }}
+                      style={{
+                        padding: "1rem",
+                        background: "rgba(255, 255, 255, 0.02)",
+                        border: hasActiveBadge
+                          ? "2px solid #fbbf24"
+                          : "1px solid rgba(255, 255, 255, 0.08)",
+                        borderRadius: "8px",
+                        cursor: "pointer",
+                        transition: "all 0.2s ease-in-out",
+                        boxShadow: hasActiveBadge ? "0 4px 12px rgba(251, 191, 36, 0.15)" : "none",
+                      }}
+                    >
+                      <strong style={{ fontSize: "0.85rem", color: "#c7d2fe", textTransform: "capitalize" }}>
+                        {section.area.replace("_", " ")}
+                      </strong>
+                      <p
+                        style={{
+                          margin: "0.4rem 0 0 0",
+                          fontSize: "0.8rem",
+                          color: "#9ca3af",
+                          lineHeight: "1.4",
+                        }}
+                      >
+                        {section.verdict}
+                      </p>
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: "0.4rem",
+                          marginTop: "0.5rem",
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        {section.citations.map((c) => (
+                          <span
+                            key={c}
+                            id={`citation-card-${c}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setHighlightedGap(c);
+                              if (excalidrawRef.current) {
+                                const elements = excalidrawRef.current.getSceneElements();
+                                const matchingEl = elements.find(
+                                  (el: any) => el.customAddressesGap === c,
+                                );
+                                if (matchingEl) {
+                                  excalidrawRef.current.updateScene({
+                                    appState: {
+                                      selectedElementIds: {
+                                        [matchingEl.id]: true,
+                                      },
+                                    },
+                                  });
+                                }
+                              }
+                            }}
+                            style={{
+                              fontSize: "0.7rem",
+                              padding: "0.15rem 0.4rem",
+                              borderRadius: "4px",
+                              fontWeight: "bold",
+                              background: highlightedGap === c ? "#fbbf24" : "rgba(255, 255, 255, 0.1)",
+                              color: highlightedGap === c ? "#18181b" : "#fbbf24",
+                              border: "1px solid rgba(251, 191, 36, 0.3)",
+                            }}
+                          >
+                            Cite #{c}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Start new interview button */}
+              <button
+                className="btn-restart"
+                onClick={handleRestart}
+                style={{
+                  marginTop: "1rem",
+                  width: "100%",
+                  padding: "0.8rem",
+                  borderRadius: "8px",
+                  fontWeight: "bold",
+                  cursor: "pointer",
+                }}
+              >
+                Start a New Interview
+              </button>
             </div>
 
-            {/* Split Section: Interactive Whiteboard Canvas & Performance Gaps Sidebar */}
+            {/* Right Side: Interactive Whiteboard Canvas (55%) */}
             <div
               style={{
+                flex: "0 0 55%",
+                height: "100%",
+                border: "1px solid var(--border-color)",
+                borderRadius: "12px",
+                overflow: "hidden",
                 display: "flex",
-                gap: "1.5rem",
-                flex: 1,
-                minHeight: "600px",
-                width: "100%",
+                flexDirection: "column",
+                background: "#f8f9fa",
               }}
             >
               <div
-                className="ideal-canvas-container"
                 style={{
-                  flex: 2,
-                  height: "100%",
-                  minHeight: "600px",
-                  border: "1px solid var(--border-color)",
-                  borderRadius: "8px",
-                  overflow: "hidden",
+                  padding: "0.8rem 1.2rem",
+                  background: "#ffffff",
+                  borderBottom: "1px solid var(--border-color)",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
                 }}
               >
+                <span style={{ fontSize: "0.85rem", fontWeight: "bold", color: "var(--text-main)" }}>
+                  🗺️ Ideal Whiteboard Diagram Model
+                </span>
+                <span style={{ fontSize: "0.75rem", color: "#6b7280" }}>
+                  Interact with shapes or click cite badges to link
+                </span>
+              </div>
+              <div style={{ flex: 1, position: "relative" }}>
                 <Excalidraw
                   viewModeEnabled={true}
                   initialData={{
@@ -1398,22 +1587,13 @@ export default function InterviewApp() {
                     excalidrawRef.current = api;
                   }}
                   onChange={(elements, appState) => {
-                    const selectedIds = Object.keys(
-                      appState.selectedElementIds || {},
-                    );
+                    const selectedIds = Object.keys(appState.selectedElementIds || {});
                     if (selectedIds.length > 0) {
-                      const selectedEl = elements.find(
-                        (el) => el.id === selectedIds[0],
-                      );
-                      if (
-                        selectedEl &&
-                        (selectedEl as any).customAddressesGap !== undefined
-                      ) {
+                      const selectedEl = elements.find((el) => el.id === selectedIds[0]);
+                      if (selectedEl && (selectedEl as any).customAddressesGap !== undefined) {
                         const gapIndex = (selectedEl as any).customAddressesGap;
                         setHighlightedGap(gapIndex);
-                        const card = document.getElementById(
-                          `citation-card-${gapIndex}`,
-                        );
+                        const card = document.getElementById(`citation-card-${gapIndex}`);
                         if (card) {
                           card.scrollIntoView({
                             behavior: "smooth",
@@ -1424,128 +1604,6 @@ export default function InterviewApp() {
                     }
                   }}
                 />
-              </div>
-
-              <div
-                className="ideal-canvas-sidebar"
-                style={{
-                  flex: 1,
-                  height: "100%",
-                  display: "flex",
-                  flexDirection: "column",
-                }}
-              >
-                <h3>Linked Performance Gaps</h3>
-                <p className="sidebar-instructions">
-                  Select a highlighted element on the canvas to view the
-                  matching transcript gap, or click on a badge below to locate
-                  it on the canvas.
-                </p>
-                <div
-                  className="linked-gaps-list"
-                  style={{ flex: 1, overflowY: "auto" }}
-                >
-                  {debriefSections.map((section, idx) => {
-                    const hasActiveBadge = section.citations.includes(
-                      highlightedGap as number,
-                    );
-                    return (
-                      <div
-                        key={idx}
-                        className={
-                          hasActiveBadge
-                            ? "linked-gap-card highlighted"
-                            : "linked-gap-card"
-                        }
-                        onClick={() => {
-                          if (section.citations.length > 0) {
-                            const targetGap = section.citations[0];
-                            setHighlightedGap(targetGap);
-                            if (excalidrawRef.current) {
-                              const elements =
-                                excalidrawRef.current.getSceneElements();
-                              const matchingEl = elements.find(
-                                (el: any) =>
-                                  el.customAddressesGap === targetGap,
-                              );
-                              if (matchingEl) {
-                                excalidrawRef.current.updateScene({
-                                  appState: {
-                                    selectedElementIds: {
-                                      [matchingEl.id]: true,
-                                    },
-                                  },
-                                });
-                              }
-                            }
-                          }
-                        }}
-                      >
-                        <strong>{section.area.replace("_", " ")}</strong>
-                        <p>{section.verdict}</p>
-                        <div
-                          style={{
-                            display: "flex",
-                            gap: "0.4rem",
-                            marginTop: "0.5rem",
-                            flexWrap: "wrap",
-                          }}
-                        >
-                          {section.citations.map((c) => (
-                            <span
-                              key={c}
-                              id={`citation-card-${c}`}
-                              className={
-                                highlightedGap === c
-                                  ? "gap-badge active"
-                                  : "gap-badge"
-                              }
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setHighlightedGap(c);
-                                if (excalidrawRef.current) {
-                                  const elements =
-                                    excalidrawRef.current.getSceneElements();
-                                  const matchingEl = elements.find(
-                                    (el: any) => el.customAddressesGap === c,
-                                  );
-                                  if (matchingEl) {
-                                    excalidrawRef.current.updateScene({
-                                      appState: {
-                                        selectedElementIds: {
-                                          [matchingEl.id]: true,
-                                        },
-                                      },
-                                    });
-                                  }
-                                }
-                              }}
-                            >
-                              Cite #{c}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <div
-                  style={{
-                    marginTop: "auto",
-                    paddingTop: "1rem",
-                    display: "flex",
-                    justifyContent: "center",
-                  }}
-                >
-                  <button
-                    className="btn-restart"
-                    style={{ width: "100%" }}
-                    onClick={handleRestart}
-                  >
-                    Start a New Interview
-                  </button>
-                </div>
               </div>
             </div>
           </div>
