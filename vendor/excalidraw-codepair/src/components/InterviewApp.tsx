@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import React, { useState, useEffect, useRef } from "react";
 import io from "socket.io-client";
 import { Excalidraw } from "../packages/excalidraw/index";
