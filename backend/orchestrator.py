@@ -88,18 +88,7 @@ class SessionOrchestrator:
     @staticmethod
     def add_transcript_entry(session_id: str, entry_type: str, content: str) -> Optional[Dict[str, Any]]:
         """Appends a dialogue, nudge, or canvas snapshot to the running transcript."""
-        sess = db.get_session(session_id)
-        if sess:
-            entry = {
-                "index": len(sess["transcript"]),
-                "timestamp": datetime.now().isoformat(),
-                "type": entry_type,  # 'canvas' | 'ai' | 'user'
-                "content": content
-            }
-            sess["transcript"].append(entry)
-            db.save_session(session_id, sess)
-            return entry
-        return None
+        return db.add_session_transcript_entry(session_id, entry_type, content)
 
     @staticmethod
     def end_interview(session_id: str) -> Optional[Dict[str, Any]]:

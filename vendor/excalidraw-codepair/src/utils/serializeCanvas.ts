@@ -48,6 +48,14 @@ export const serializeCanvas = (
       shapes.push(
         `- Shape (${el.type}): ${label} at (${rx}, ${ry}) size ${rw}x${rh}`,
       );
+    } else if (el.type === "freedraw" || el.type === "line") {
+      const rx = Math.round(el.x);
+      const ry = Math.round(el.y);
+      const rw = Math.round(el.width);
+      const rh = Math.round(el.height);
+      shapes.push(
+        `- Freehand Stroke (${el.type}) at (${rx}, ${ry}) size ${rw}x${rh}`,
+      );
     } else if (el.type === "arrow") {
       const startId = (el as any).startBinding?.elementId;
       const endId = (el as any).endBinding?.elementId;

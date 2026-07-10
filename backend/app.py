@@ -78,8 +78,12 @@ async def create_session(
         # Save resume PDF locally
         resume_filename = f"resume_{uuid_str()}.pdf"
         resume_path = os.path.join(UPLOAD_DIR, resume_filename)
-        with open(resume_path, "wb") as buffer:
-            shutil.copyfileobj(resume.file, buffer)
+        
+        def save_file():
+            with open(resume_path, "wb") as buffer:
+                shutil.copyfileobj(resume.file, buffer)
+                
+        await asyncio.to_thread(save_file)
 
         # Call orchestrator to build session
         session_data = await asyncio.to_thread(
@@ -127,10 +131,11 @@ async def get_ideal_answer(session_id: str):
         raise HTTPException(status_code=404, detail="Session not found")
         
     plan = sess.get("ideal_answer_plan")
-    if not plan:
+    if not plan or not plan.get("blocks"):
         plan = await asyncio.to_thread(IdealAnswerGenerator.generate_plan, session_id)
-        sess["ideal_answer_plan"] = plan
-        db.save_session(session_id, sess)
+        if plan and plan.get("blocks"):
+            sess["ideal_answer_plan"] = plan
+            db.save_session(session_id, sess)
         
     return plan
 
@@ -202,14 +207,17 @@ async def join_room(sid, data):
         
         # Start interview in Orchestrator if it was in setup status
         sess = db.get_session(session_id)
-        if sess and sess["status"] == "setup":
+        if sess and sess.get("status") == "setup":
             SessionOrchestrator.start_interview(session_id)
-            session_activity[session_id] = datetime.now()
+            session_activity[session_id] = {
+                "last_active": datetime.now(),
+                "room_id": room_id
+            }
             
             # AI introduces itself and asks the initial question
             welcome_text = (
                 f"Hello! I am your interviewer today. I have reviewed your profile against the role, "
-                f"and selected a technical question for you: \n\n**{sess['question_prompt']}**\n\n"
+                f"and selected a technical question for you: \n\n**{sess.get('question_prompt', '')}**\n\n"
                 f"Please use the Nudge whiteboard to draw out your system design, write your code, "
                 f"and explain your thought process."
             )
@@ -225,7 +233,10 @@ async def canvas_update(sid, data):
     
     if session_id and serialized_canvas:
         # Update inactivity tracker
-        session_activity[session_id] = datetime.now()
+        session_activity[session_id] = {
+            "last_active": datetime.now(),
+            "room_id": room_id or session_id
+        }
         
         # Append canvas snapshot to running transcript
         SessionOrchestrator.add_transcript_entry(session_id, "canvas", serialized_canvas)
@@ -239,7 +250,10 @@ async def user_message(sid, data):
     content = data.get("content", "")
     
     if session_id and content:
-        session_activity[session_id] = datetime.now()
+        session_activity[session_id] = {
+            "last_active": datetime.now(),
+            "room_id": room_id or session_id
+        }
         SessionOrchestrator.add_transcript_entry(session_id, "user", content)
         
         # Trigger AI interviewer turn
@@ -255,7 +269,10 @@ async def request_nudge(sid, data):
     session_id = data.get("sessionId") or room_id
     
     if session_id:
-        session_activity[session_id] = datetime.now()
+        session_activity[session_id] = {
+            "last_active": datetime.now(),
+            "room_id": room_id or session_id
+        }
         await sio.emit("ai-status", {"status": "typing"}, room=room_id)
         nudge_text = await asyncio.to_thread(generate_interviewer_turn, session_id, is_nudge=True)
         SessionOrchestrator.add_transcript_entry(session_id, "ai", nudge_text)
@@ -290,20 +307,21 @@ async def monitor_inactivity():
         now = datetime.now()
         inactive_sessions = []
         
-        for sess_id, last_time in list(session_activity.items()):
-            # Heuristic: 45 seconds of no activity triggers a nudge
-            if (now - last_time).total_seconds() > 45:
-                inactive_sessions.append(sess_id)
+        for sess_id, info in list(session_activity.items()):
+            last_time = info.get("last_active")
+            if last_time and (now - last_time).total_seconds() > 45:
+                inactive_sessions.append((sess_id, info.get("room_id", sess_id)))
                 
-        for sess_id in inactive_sessions:
+        for sess_id, r_id in inactive_sessions:
             print(f"[Idle Detector] Session {sess_id} inactive for >45s. Triggering automatic nudge...")
             # Reset activity timestamp so we don't spam nudges
-            session_activity[sess_id] = datetime.now()
+            if sess_id in session_activity:
+                session_activity[sess_id]["last_active"] = datetime.now()
             
             # Generate and emit nudge
             nudge = await asyncio.to_thread(generate_interviewer_turn, sess_id, is_nudge=True)
             SessionOrchestrator.add_transcript_entry(sess_id, "ai", nudge)
-            await sio.emit("ai-message", {"content": nudge, "timestamp": datetime.now().isoformat()}, room=sess_id)
+            await sio.emit("ai-message", {"content": nudge, "timestamp": datetime.now().isoformat()}, room=r_id)
 
 if __name__ == "__main__":
     uvicorn.run(socket_app, host="0.0.0.0", port=3002)

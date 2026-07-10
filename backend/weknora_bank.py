@@ -1,7 +1,7 @@
 import re
 from typing import Dict, Any, List, Optional
 
-# Curated Seed Question Bank (25 questions)
+# Curated Seed Question Bank (34 questions)
 QUESTION_BANK = [
     # Coding Questions (Data Structures & Algorithms)
     {
@@ -277,8 +277,8 @@ QUESTION_BANK = [
     }
 ]
 
-def get_tf_idf_similarity(text1: str, text2: str) -> float:
-    """Compare similarity between two texts using a lightweight TF overlap vectorizer."""
+def get_cosine_similarity(text1: str, text2: str) -> float:
+    """Compare similarity between two texts using a lightweight token cosine similarity vectorizer."""
     def tokenize(text):
         return re.findall(r'\w+', text.lower())
     
@@ -334,12 +334,12 @@ def retrieve_question(gap_profile: Any, interview_type: str) -> Dict[str, Any]:
         
     gap_query = " ".join(top_gaps)
     
-    # Rank questions by TF-IDF similarity to the gap query
+    # Rank questions by cosine similarity to the gap query
     scored_questions = []
     for q in typed_questions:
         # Match against topic and prompt_text
         match_text = f"{q['topic']} {q['prompt_text']}"
-        score = get_tf_idf_similarity(gap_query, match_text)
+        score = get_cosine_similarity(gap_query, match_text)
         scored_questions.append((q, score))
         
     scored_questions.sort(key=lambda x: x[1], reverse=True)
@@ -376,7 +376,7 @@ def retrieve_top_questions(gap_profile: Any, interview_type: str, limit: int = 3
     scored_questions = []
     for q in typed_questions:
         match_text = f"{q['topic']} {q['prompt_text']}"
-        score = get_tf_idf_similarity(gap_query, match_text)
+        score = get_cosine_similarity(gap_query, match_text)
         scored_questions.append((q, score))
         
     scored_questions.sort(key=lambda x: x[1], reverse=True)

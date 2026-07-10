@@ -17,10 +17,21 @@ def generate_raw_debrief(session: Dict[str, Any]) -> Dict[str, Any]:
     
     # Format the transcript with indices
     formatted_transcript = []
-    for entry in session.get("transcript", []):
+    transcript_list = session.get("transcript", [])
+    last_canvas_idx = -1
+    for i, entry in enumerate(transcript_list):
+        if entry.get("type") == "canvas":
+            last_canvas_idx = i
+
+    for i, entry in enumerate(transcript_list):
+        entry_type = entry.get("type", "")
+        content = entry.get("content", "")
+        if entry_type == "canvas" and i != last_canvas_idx:
+            content = "[Canvas state snapshot: Shapes updated (content omitted for readability)]"
+
         formatted_transcript.append(
-            f"Index [{entry['index']}] - Type: {entry['type']} - Timestamp: {entry['timestamp']}\n"
-            f"Content:\n{entry['content']}\n"
+            f"Index [{entry.get('index')}] - Type: {entry_type} - Timestamp: {entry.get('timestamp')}\n"
+            f"Content:\n{content}\n"
             f"----------------------------------------"
         )
     transcript_str = "\n".join(formatted_transcript)
@@ -141,8 +152,8 @@ def verify_debrief_citations(session: Dict[str, Any], raw_debrief: Dict[str, Any
                             is_valid_semantic = True
                             
                 elif area == "communication":
-                    # Must be actual dialogue (user or AI text), not raw canvas serialization
-                    if entry_type in ["user", "ai"]:
+                    # Must be actual candidate dialogue text, not AI text or raw canvas serialization
+                    if entry_type == "user":
                         is_valid_semantic = True
                         
                 elif area == "problem_solving":

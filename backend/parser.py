@@ -9,7 +9,7 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if PROJECT_ROOT not in sys.path:
     sys.path.append(PROJECT_ROOT)
 
-from extractors.hiring_agent_extractor import extract as extract_resume
+from backend.extractors.hiring_agent_extractor import extract as extract_resume
 
 def parse_resume_file(pdf_path: str) -> Dict[str, Any]:
     """Parse candidate resume using the hiring-agent wrapper."""

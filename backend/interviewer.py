@@ -31,13 +31,17 @@ def generate_interviewer_turn(session_id: str, is_nudge: bool = False) -> str:
     chat_history = []
     
     for entry in sess.get("transcript", []):
-        if entry["type"] == "canvas":
-            canvas_transcript = entry["content"]
-        elif entry["type"] == "ai":
-            chat_history.append(f"Interviewer: {entry['content']}")
-        elif entry["type"] == "user":
-            chat_history.append(f"Candidate: {entry['content']}")
+        if entry.get("type") == "canvas":
+            canvas_transcript = entry.get("content", "")
+        elif entry.get("type") == "ai":
+            chat_history.append(f"Interviewer: {entry.get('content', '')}")
+        elif entry.get("type") == "user":
+            chat_history.append(f"Candidate: {entry.get('content', '')}")
             
+    # Keep context window under budget by using a sliding window for active chat dialogue
+    if len(chat_history) > 10:
+        chat_history = ["... [Earlier dialogue truncated for context window efficiency] ..."] + chat_history[-10:]
+        
     history_str = "\n".join(chat_history)
     
     # 3. System Prompt

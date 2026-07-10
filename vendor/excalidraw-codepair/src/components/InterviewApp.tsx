@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
-import ExcalidrawApp from "../excalidraw-app";
 import io from "socket.io-client";
 import { Excalidraw } from "../packages/excalidraw/index";
 import { structuredPlanToCanvasElements } from "../utils/idealCanvas";
+import { serializeCanvas } from "../utils/serializeCanvas";
 import "../css/interview.css";
 
 interface ChatMessage {
@@ -54,6 +54,31 @@ export default function InterviewApp() {
   const [canvasKey, setCanvasKey] = useState(0);
   const [showNextScenarioOffer, setShowNextScenarioOffer] = useState(false);
   const [hasNextScenario, setHasNextScenario] = useState(false);
+
+  const lastEmittedCanvasRef = useRef<string>("");
+  const canvasTimeoutRef = useRef<any>(null);
+
+  const handleCanvasChange = (elements: readonly any[]) => {
+    if (screen !== "interview") return;
+
+    if (canvasTimeoutRef.current) {
+      clearTimeout(canvasTimeoutRef.current);
+    }
+
+    canvasTimeoutRef.current = setTimeout(() => {
+      const serialized = serializeCanvas(elements);
+      if (serialized !== lastEmittedCanvasRef.current) {
+        lastEmittedCanvasRef.current = serialized;
+        if (socketRef.current) {
+          socketRef.current.emit("canvas_update", {
+            roomId: sessionId,
+            sessionId: sessionId,
+            serialized: serialized,
+          });
+        }
+      }
+    }, 1500);
+  };
 
   const socketRef = useRef<any>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -398,7 +423,11 @@ export default function InterviewApp() {
       <div className="interview-layout">
         {/* Left Side: Excalidraw Whiteboard Canvas (Always active and visible!) */}
         <div className="canvas-panel">
-          <ExcalidrawApp key={canvasKey} />
+          <Excalidraw
+            ref={excalidrawRef}
+            onChange={handleCanvasChange}
+            theme="dark"
+          />
         </div>
 
         {/* Floating Configuration modal when screen is setup */}

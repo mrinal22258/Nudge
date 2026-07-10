@@ -65,12 +65,30 @@ class LocalDB:
             db = self._read_db()
             return db["job_targets"].get(target_id)
 
-    # Sessions CRUD
     def save_session(self, session_id: str, data: Dict[str, Any]):
         with self.lock:
             db = self._read_db()
             db["sessions"][session_id] = data
             self._write_db(db)
+
+    def add_session_transcript_entry(self, session_id: str, entry_type: str, content: str) -> Optional[Dict[str, Any]]:
+        from datetime import datetime
+        with self.lock:
+            db = self._read_db()
+            sess = db["sessions"].get(session_id)
+            if sess:
+                if "transcript" not in sess:
+                    sess["transcript"] = []
+                entry = {
+                    "index": len(sess["transcript"]),
+                    "timestamp": datetime.now().isoformat(),
+                    "type": entry_type,
+                    "content": content
+                }
+                sess["transcript"].append(entry)
+                self._write_db(db)
+                return entry
+            return None
 
     def get_session(self, session_id: str) -> Optional[Dict[str, Any]]:
         with self.lock:
