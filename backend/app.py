@@ -4,8 +4,21 @@ import shutil
 import asyncio
 import traceback
 from datetime import datetime
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Header, Depends
 from fastapi.middleware.cors import CORSMiddleware
+
+def verify_session_token(session_id: str, authorization: str = Header(None)):
+    sess = db.get_session(session_id)
+    if not sess:
+        raise HTTPException(status_code=404, detail="Session not found")
+    expected = sess.get("session_token")
+    provided = authorization or ""
+    if provided.startswith("Bearer "):
+        provided = provided[7:]
+    provided = provided.strip()
+    if not expected or provided != expected:
+        raise HTTPException(status_code=403, detail="Invalid or missing session token")
+    return sess
 import socketio
 import uvicorn
 from typing import Dict, Any, List
@@ -105,10 +118,7 @@ async def create_session(
         raise HTTPException(status_code=500, detail=f"Failed to create interview session: {str(e)}")
 
 @app.get("/api/session/{session_id}")
-async def get_session(session_id: str):
-    sess = db.get_session(session_id)
-    if not sess:
-        raise HTTPException(status_code=404, detail="Session not found")
+async def get_session(session_id: str, sess: dict = Depends(verify_session_token)):
     return sess
 
 @app.get("/api/sessions")
@@ -116,12 +126,8 @@ async def list_sessions():
     return db.list_sessions()
 
 @app.get("/api/debrief/{session_id}")
-async def get_debrief(session_id: str):
+async def get_debrief(session_id: str, sess: dict = Depends(verify_session_token)):
     """Generates the verified debrief or returns the cached one."""
-    sess = db.get_session(session_id)
-    if not sess:
-        raise HTTPException(status_code=404, detail="Session not found")
-        
     debrief = db.get_debrief(session_id)
     if not debrief:
         # Trigger debrief generation & verification pass
@@ -134,12 +140,8 @@ async def get_debrief(session_id: str):
     return debrief
 
 @app.get("/api/debrief/ideal_answer/{session_id}")
-async def get_ideal_answer(session_id: str):
+async def get_ideal_answer(session_id: str, sess: dict = Depends(verify_session_token)):
     """Retrieves the ideal answer plan or generates a new verified plan."""
-    sess = db.get_session(session_id)
-    if not sess:
-        raise HTTPException(status_code=404, detail="Session not found")
-        
     plan = sess.get("ideal_answer_plan")
     if not plan or not plan.get("blocks"):
         plan = await asyncio.to_thread(IdealAnswerGenerator.generate_plan, session_id)
@@ -150,12 +152,8 @@ async def get_ideal_answer(session_id: str):
     return plan
 
 @app.post("/api/session/next_scenario/{session_id}")
-async def load_next_scenario(session_id: str):
+async def load_next_scenario(session_id: str, sess: dict = Depends(verify_session_token)):
     """Resets conversation transcript and moves to next matched target scenario question."""
-    sess = db.get_session(session_id)
-    if not sess:
-        raise HTTPException(status_code=404, detail="Session not found")
-        
     matched = sess.get("matched_questions", [])
     idx = sess.get("current_question_index", 0)
     
@@ -207,17 +205,59 @@ async def connect(sid, environ):
 async def disconnect(sid):
     print(f"[Socket] Client disconnected: {sid}")
 
+def decrypt_canvas_payload(session_id: str, ciphertext_hex: str, iv_hex: str, room_key: str) -> str:
+    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+    import hashlib
+    # Derive key using HKDF
+    # Salt is sessionId, info is "canvas_encryption"
+    key_material = room_key.encode("utf-8")
+    salt = session_id.encode("utf-8")
+    info = b"canvas_encryption"
+    
+    derived_key = hashlib.hkdf_derive(
+        key_material=key_material,
+        length=32, # 256-bit key
+        salt=salt,
+        info=info,
+        hash_name="sha256"
+    )
+    
+    ciphertext = bytes.fromhex(ciphertext_hex)
+    iv = bytes.fromhex(iv_hex)
+    aesgcm = AESGCM(derived_key)
+    decrypted_bytes = aesgcm.decrypt(iv, ciphertext, None)
+    return decrypted_bytes.decode("utf-8")
+
 @sio.event
 async def join_room(sid, data):
     room_id = data.get("roomId")
     session_id = data.get("sessionId") or room_id
+    token = data.get("token")
+    room_key = data.get("roomKey")
+    
     if room_id:
+        sess = db.get_session(session_id)
+        if not sess:
+            print(f"[Socket] Session not found for join attempt: {session_id}")
+            await sio.emit("error", {"detail": "Session not found"}, room=sid)
+            return
+            
+        expected_token = sess.get("session_token")
+        if not expected_token or token != expected_token:
+            print(f"[Socket] Unauthorized join attempt for session: {session_id}")
+            await sio.emit("error", {"detail": "Invalid or missing session token"}, room=sid)
+            return
+            
+        # Store roomKey in session database
+        if room_key:
+            sess["room_key"] = room_key
+            db.save_session(session_id, sess)
+            
         await sio.enter_room(sid, room_id)
         print(f"[Socket] {sid} joined room: {room_id}")
         
         # Start interview in Orchestrator if it was in setup status
-        sess = db.get_session(session_id)
-        if sess and sess.get("status") == "setup":
+        if sess.get("status") == "setup":
             SessionOrchestrator.start_interview(session_id)
             session_activity[session_id] = {
                 "last_active": datetime.now(),
@@ -239,9 +279,27 @@ async def canvas_update(sid, data):
     """Excalidraw canvas serialized state update."""
     room_id = data.get("roomId")
     session_id = data.get("sessionId") or room_id
-    serialized_canvas = data.get("serialized", "")
+    ciphertext_hex = data.get("ciphertext")
+    iv_hex = data.get("iv")
     
-    if session_id and serialized_canvas:
+    if session_id and ciphertext_hex and iv_hex:
+        # Get room_key from session
+        sess = db.get_session(session_id)
+        if not sess:
+            print(f"[Socket] Session not found for canvas update: {session_id}")
+            return
+            
+        room_key = sess.get("room_key")
+        if not room_key:
+            print(f"[Socket] No room key found in session state for: {session_id}")
+            return
+            
+        try:
+            serialized_canvas = decrypt_canvas_payload(session_id, ciphertext_hex, iv_hex, room_key)
+        except Exception as e:
+            print(f"[Socket] Decryption failed for canvas update of session {session_id}: {e}")
+            return
+            
         # Update inactivity tracker
         session_activity[session_id] = {
             "last_active": datetime.now(),
@@ -250,7 +308,7 @@ async def canvas_update(sid, data):
         
         # Append canvas snapshot to running transcript
         SessionOrchestrator.add_transcript_entry(session_id, "canvas", serialized_canvas)
-        print(f"[Socket] Canvas updated for session {session_id} ({len(serialized_canvas)} chars)")
+        print(f"[Socket] Canvas updated for session {session_id} ({len(serialized_canvas)} chars, decrypted)")
 
 @sio.event
 async def user_message(sid, data):
@@ -363,4 +421,5 @@ async def monitor_inactivity():
                 print(f"[Cleanup Error] {e}")
 
 if __name__ == "__main__":
-    uvicorn.run(socket_app, host="0.0.0.0", port=3002)
+    host = os.environ.get("NUDGE_HOST", "127.0.0.1")
+    uvicorn.run(socket_app, host=host, port=3002)

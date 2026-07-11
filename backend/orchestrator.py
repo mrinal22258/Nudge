@@ -55,9 +55,12 @@ class SessionOrchestrator:
         question = matched_questions[0]
         
         # 5. Initialize Session
+        import secrets
         session_id = str(uuid.uuid4())
+        session_token = secrets.token_urlsafe(32)
         session_data = {
             "id": session_id,
+            "session_token": session_token,
             "candidate_id": candidate_id,
             "job_target_id": target_id,
             "question_id": question["id"],

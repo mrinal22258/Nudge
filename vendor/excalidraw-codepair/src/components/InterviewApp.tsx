@@ -6,6 +6,53 @@ import { structuredPlanToCanvasElements } from "../utils/idealCanvas";
 import { serializeCanvas } from "../utils/serializeCanvas";
 import "../css/interview.css";
 
+function generateRoomKey(): string {
+  const bytes = new Uint8Array(16); // 128-bit
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, b => b.toString(16).padStart(2, "0")).join("");
+}
+
+function arrayBufferToHex(buffer: ArrayBuffer): string {
+  return Array.from(new Uint8Array(buffer), b => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function deriveAesKey(roomKey: string, sessionId: string): Promise<CryptoKey> {
+  const encoder = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(roomKey),
+    { name: "HKDF" },
+    false,
+    ["deriveKey"]
+  );
+  return await crypto.subtle.deriveKey(
+    {
+      name: "HKDF",
+      hash: "SHA-256",
+      salt: encoder.encode(sessionId),
+      info: encoder.encode("canvas_encryption"),
+    },
+    keyMaterial,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["encrypt", "decrypt"]
+  );
+}
+
+async function encryptCanvas(serialized: string, roomKey: string, sessionId: string): Promise<{ ciphertext: string; iv: string }> {
+  const aesKey = await deriveAesKey(roomKey, sessionId);
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const encrypted = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv: iv },
+    aesKey,
+    new TextEncoder().encode(serialized)
+  );
+  return {
+    ciphertext: arrayBufferToHex(encrypted),
+    iv: arrayBufferToHex(iv.buffer)
+  };
+}
+
 interface ChatMessage {
   role: "ai" | "user" | "system";
   content: string;
@@ -50,6 +97,31 @@ export default function InterviewApp() {
   const [idealAnswerPlan, setIdealAnswerPlan] = useState<any>(null);
   const [highlightedGap, setHighlightedGap] = useState<number | null>(null);
 
+  const [sessionToken, setSessionToken] = useState<string | null>(null);
+  const sessionTokenRef = useRef<string | null>(null);
+
+  const updateSessionToken = (token: string | null) => {
+    setSessionToken(token);
+    sessionTokenRef.current = token;
+  };
+
+  const authFetch = (url: string, options: RequestInit = {}) => {
+    const token = sessionTokenRef.current;
+    if (token) {
+      options.headers = {
+        ...options.headers,
+        "Authorization": `Bearer ${token}`,
+      };
+    }
+    return fetch(url, options);
+  };
+
+  const getRoomKeyFromHash = () => {
+    const hash = window.location.hash;
+    const match = hash.match(/^#room=([^,]+),(.+)$/);
+    return match ? match[2] : null;
+  };
+
   // Timer and Multi-Scenario States
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [canvasKey, setCanvasKey] = useState(0);
@@ -68,16 +140,25 @@ export default function InterviewApp() {
       clearTimeout(canvasTimeoutRef.current);
     }
 
-    canvasTimeoutRef.current = setTimeout(() => {
+    canvasTimeoutRef.current = setTimeout(async () => {
       const serialized = serializeCanvas(elements);
       if (serialized !== lastEmittedCanvasRef.current) {
         lastEmittedCanvasRef.current = serialized;
         if (socketRef.current) {
-          socketRef.current.emit("canvas_update", {
-            roomId: sessionId,
-            sessionId,
-            serialized,
-          });
+          const roomKey = getRoomKeyFromHash();
+          if (roomKey && sessionId) {
+            try {
+              const { ciphertext, iv } = await encryptCanvas(serialized, roomKey, sessionId);
+              socketRef.current.emit("canvas_update", {
+                roomId: sessionId,
+                sessionId,
+                ciphertext,
+                iv,
+              });
+            } catch (err) {
+              console.error("Encryption failed:", err);
+            }
+          }
         }
       }
     }, 1500);
@@ -157,6 +238,7 @@ export default function InterviewApp() {
       ]);
 
       const data = await response.json();
+      updateSessionToken(data.session_token);
 
       const newSessionId = data.id;
       setSessionId(newSessionId);
@@ -168,7 +250,7 @@ export default function InterviewApp() {
       setHasNextScenario(idx + 1 < matched.length);
 
       // 2. Set Excalidraw collaboration URL room hash
-      const roomKey = "1234567890123456789012"; // 22-char key
+      const roomKey = generateRoomKey();
       window.location.hash = `room=${newSessionId},${roomKey}`;
 
       // 3. Setup Socket.io client connection to backend orchestrator
@@ -179,6 +261,8 @@ export default function InterviewApp() {
         socket.emit("join_room", {
           roomId: newSessionId,
           sessionId: newSessionId,
+          token: data.session_token,
+          roomKey: roomKey,
         });
       });
 
@@ -197,15 +281,25 @@ export default function InterviewApp() {
       });
 
       socket.on("interview-ended", async () => {
-        // Fetch debrief & session transcript
+        // Fetch debrief & session transcript using authentication
         const debriefResp = await fetch(
           `http://localhost:3002/api/debrief/${newSessionId}`,
+          {
+            headers: {
+              "Authorization": `Bearer ${data.session_token}`
+            }
+          }
         );
         const debriefData = await debriefResp.json();
         setDebriefSections(debriefData.sections);
 
         const sessResp = await fetch(
           `http://localhost:3002/api/session/${newSessionId}`,
+          {
+            headers: {
+              "Authorization": `Bearer ${data.session_token}`
+            }
+          }
         );
         const sessData = await sessResp.json();
         setFullTranscript(sessData.transcript);
@@ -213,6 +307,11 @@ export default function InterviewApp() {
         try {
           const idealResp = await fetch(
             `http://localhost:3002/api/debrief/ideal_answer/${newSessionId}`,
+            {
+              headers: {
+                "Authorization": `Bearer ${data.session_token}`
+              }
+            }
           );
           if (idealResp.ok) {
             const idealData = await idealResp.json();
@@ -303,7 +402,7 @@ export default function InterviewApp() {
 
   const handleLoadNextScenario = async () => {
     try {
-      const resp = await fetch(
+      const resp = await authFetch(
         `http://localhost:3002/api/session/next_scenario/${sessionId}`,
         { method: "POST" },
       );
@@ -328,10 +427,8 @@ export default function InterviewApp() {
         const idx = data.session.current_question_index || 0;
         setHasNextScenario(idx + 1 < matched.length);
 
-        // Generate a new 22-char encryption key to clear the canvas
-        const nextKey =
-          Math.random().toString(36).substring(2, 13) +
-          Math.random().toString(36).substring(2, 13);
+        // Generate a new cryptographically secure key to clear the canvas
+        const nextKey = generateRoomKey();
         window.location.hash = `room=${sessionId},${nextKey}`;
 
         // Force ExcalidrawApp to unmount and remount fresh
@@ -345,6 +442,8 @@ export default function InterviewApp() {
           socket.emit("join_room", {
             roomId: sessionId,
             sessionId,
+            token: sessionTokenRef.current,
+            roomKey: nextKey,
           });
         });
 
@@ -363,20 +462,20 @@ export default function InterviewApp() {
         });
 
         socket.on("interview-ended", async () => {
-          const debriefResp = await fetch(
+          const debriefResp = await authFetch(
             `http://localhost:3002/api/debrief/${sessionId}`,
           );
           const debriefData = await debriefResp.json();
           setDebriefSections(debriefData.sections);
 
-          const sessResp = await fetch(
+          const sessResp = await authFetch(
             `http://localhost:3002/api/session/${sessionId}`,
           );
           const sessData = await sessResp.json();
           setFullTranscript(sessData.transcript);
 
           try {
-            const idealResp = await fetch(
+            const idealResp = await authFetch(
               `http://localhost:3002/api/debrief/ideal_answer/${sessionId}`,
             );
             if (idealResp.ok) {
@@ -390,7 +489,7 @@ export default function InterviewApp() {
           socket.disconnect();
 
           // Re-check next scenario list
-          const updatedSessResp = await fetch(
+          const updatedSessResp = await authFetch(
             `http://localhost:3002/api/session/${sessionId}`,
           );
           if (updatedSessResp.ok) {

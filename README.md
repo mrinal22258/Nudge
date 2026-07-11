@@ -123,5 +123,6 @@ ollama pull qwen2.5:3b
 
 ## 5. Security & Privacy Guidelines
 - **Zero Cloud Storage**: All PDF resumes, interview transcripts, and session databases are stored locally inside `db.json` and `uploads/`. No personal data is sent to external servers.
-- **End-to-End Encryption**: Real-time canvas sharing is secured using a randomly generated 22-character encryption key stored in the URL hash.
+- **Transit Encryption**: Canvas and chat data are encrypted in transit between browser and local backend using AES-GCM with a per-session key derived via HKDF; data at rest in `db.json` remains local, unencrypted plaintext (see Fix 3 for why full at-rest encryption isn't implemented).
+- **Local Network Safety**: By default Nudge only accepts connections from localhost. Set `NUDGE_HOST=0.0.0.0` if you need LAN access, e.g. testing from a phone — do this only on trusted networks.
 - **Community placeholders**: All community redirected channels (Discord, Twitter/X, GitHub issues) are placeholder dialogs protecting internal workflows.

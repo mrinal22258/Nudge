@@ -5,3 +5,4 @@ pymupdf>=1.22.0
 PyPDF2>=3.0.0
 ollama>=0.1.7
 python-multipart>=0.0.6
+cryptography>=41.0.0
