@@ -65,4 +65,8 @@ Below is the directory structure (depth 2) of the cloned vendor repositories, fo
 - **Context**: Standard LLM evaluation debriefs can hallucinate positive or negative candidate actions.
 - **Decision**: Repurposed the deterministic validation concepts of `longextract-bench`. The generated debrief must specify exact citation indices matching event stamps in the session transcript. The verifier checks index bounds, validates content types, and discards or flags un-grounded claims.
 
+### 11. Real Transit Encryption for Canvas Updates (2026-07-11)
+- **Context**: Decision 8 opted to send canvas serialization in plaintext because of backend visibility requirements, which left canvas updates vulnerable to LAN eavesdropping.
+- **Decision**: Switched to real AES-GCM encryption for canvas serialization in transit. The frontend derives a session key from the client-generated room key using HKDF and encrypts the serialized canvas layout. The backend receives the room key upon authorized session joining, derives the same key, and decrypts the payload, maintaining both in-transit security and backend readability.
+
 
