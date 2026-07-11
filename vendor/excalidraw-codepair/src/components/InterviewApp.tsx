@@ -53,6 +53,8 @@ async function encryptCanvas(serialized: string, roomKey: string, sessionId: str
   };
 }
 
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3002";
+
 interface ChatMessage {
   role: "ai" | "user" | "system";
   content: string;
@@ -221,7 +223,7 @@ export default function InterviewApp() {
 
     try {
       // 1. Call backend API to parse candidate, target, and retrieve question
-      const response = await fetch("http://localhost:3002/api/session/create", {
+      const response = await fetch(`${API_BASE}/api/session/create`, {
         method: "POST",
         body: formData,
       });
@@ -254,7 +256,7 @@ export default function InterviewApp() {
       window.location.hash = `room=${newSessionId},${roomKey}`;
 
       // 3. Setup Socket.io client connection to backend orchestrator
-      const socket = io("http://localhost:3002");
+      const socket = io(API_BASE);
       socketRef.current = socket;
 
       socket.on("connect", () => {
@@ -283,7 +285,7 @@ export default function InterviewApp() {
       socket.on("interview-ended", async () => {
         // Fetch debrief & session transcript using authentication
         const debriefResp = await fetch(
-          `http://localhost:3002/api/debrief/${newSessionId}`,
+          `${API_BASE}/api/debrief/${newSessionId}`,
           {
             headers: {
               "Authorization": `Bearer ${data.session_token}`
@@ -294,7 +296,7 @@ export default function InterviewApp() {
         setDebriefSections(debriefData.sections);
 
         const sessResp = await fetch(
-          `http://localhost:3002/api/session/${newSessionId}`,
+          `${API_BASE}/api/session/${newSessionId}`,
           {
             headers: {
               "Authorization": `Bearer ${data.session_token}`
@@ -306,7 +308,7 @@ export default function InterviewApp() {
 
         try {
           const idealResp = await fetch(
-            `http://localhost:3002/api/debrief/ideal_answer/${newSessionId}`,
+            `${API_BASE}/api/debrief/ideal_answer/${newSessionId}`,
             {
               headers: {
                 "Authorization": `Bearer ${data.session_token}`
@@ -403,7 +405,7 @@ export default function InterviewApp() {
   const handleLoadNextScenario = async () => {
     try {
       const resp = await authFetch(
-        `http://localhost:3002/api/session/next_scenario/${sessionId}`,
+        `${API_BASE}/api/session/next_scenario/${sessionId}`,
         { method: "POST" },
       );
       const data = await resp.json();
@@ -435,7 +437,7 @@ export default function InterviewApp() {
         setCanvasKey((prev) => prev + 1);
 
         // Setup Socket.io client connection to backend orchestrator for the new scenario
-        const socket = io("http://localhost:3002");
+        const socket = io(API_BASE);
         socketRef.current = socket;
 
         socket.on("connect", () => {
@@ -463,20 +465,20 @@ export default function InterviewApp() {
 
         socket.on("interview-ended", async () => {
           const debriefResp = await authFetch(
-            `http://localhost:3002/api/debrief/${sessionId}`,
+            `${API_BASE}/api/debrief/${sessionId}`,
           );
           const debriefData = await debriefResp.json();
           setDebriefSections(debriefData.sections);
 
           const sessResp = await authFetch(
-            `http://localhost:3002/api/session/${sessionId}`,
+            `${API_BASE}/api/session/${sessionId}`,
           );
           const sessData = await sessResp.json();
           setFullTranscript(sessData.transcript);
 
           try {
             const idealResp = await authFetch(
-              `http://localhost:3002/api/debrief/ideal_answer/${sessionId}`,
+              `${API_BASE}/api/debrief/ideal_answer/${sessionId}`,
             );
             if (idealResp.ok) {
               const idealData = await idealResp.json();
@@ -490,7 +492,7 @@ export default function InterviewApp() {
 
           // Re-check next scenario list
           const updatedSessResp = await authFetch(
-            `http://localhost:3002/api/session/${sessionId}`,
+            `${API_BASE}/api/session/${sessionId}`,
           );
           if (updatedSessResp.ok) {
             const updatedSessData = await updatedSessResp.json();

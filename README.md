@@ -118,6 +118,7 @@ ollama pull qwen2.5:3b
    npm run start --prefix vendor/excalidraw-codepair
    ```
    The web application will open on `http://localhost:3000`.
+   To point the frontend at a non-default backend host/port (e.g. if you set `NUDGE_HOST`), create `vendor/excalidraw-codepair/.env` with `VITE_API_URL=http://<host>:3002`.
 
 ---
 
