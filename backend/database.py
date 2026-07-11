@@ -8,6 +8,8 @@ DB_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "db.json
 class LocalDB:
     def __init__(self):
         self.lock = threading.Lock()
+        self._cache = None
+        self._last_mtime = 0.0
         self._init_db()
 
     def _init_db(self):
@@ -22,8 +24,18 @@ class LocalDB:
                 self._write_db(default_data)
 
     def _read_db(self) -> Dict[str, Any]:
+        try:
+            mtime = os.path.getmtime(DB_FILE)
+        except OSError:
+            mtime = 0.0
+            
+        if self._cache is not None and mtime <= self._last_mtime:
+            return self._cache
+            
         with open(DB_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
+            self._cache = json.load(f)
+            self._last_mtime = mtime
+            return self._cache
 
     def _write_db(self, data: Dict[str, Any]):
         import tempfile
@@ -33,6 +45,11 @@ class LocalDB:
             with os.fdopen(fd, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
             os.replace(temp_path, DB_FILE)
+            self._cache = data
+            try:
+                self._last_mtime = os.path.getmtime(DB_FILE)
+            except OSError:
+                self._last_mtime = 0.0
         except Exception as e:
             if os.path.exists(temp_path):
                 try:
