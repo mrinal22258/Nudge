@@ -10,6 +10,20 @@ if PROJECT_ROOT not in sys.path:
 
 from backend.database import db
 from backend.weknora_bank import QUESTION_BANK
+import re
+
+def _is_grounded(content: str, expected_notes: str, min_overlap_ratio: float = 0.10) -> bool:
+    """
+    Cheap lexical grounding check: does this block share meaningful vocabulary with the expected notes?
+    NOTE: This is explicitly a simple heuristic check based on word overlap ratio to catch extreme hallucinations.
+    Since code blocks have lower overlap with prose explanation text, we set a conservative default ratio of 0.10.
+    """
+    content_words = set(re.findall(r'\w+', content.lower()))
+    notes_words = set(re.findall(r'\w+', expected_notes.lower()))
+    if not content_words or not notes_words:
+        return True  # nothing to compare against — don't false-positive-reject
+    overlap = content_words & notes_words
+    return len(overlap) / min(len(content_words), len(notes_words)) >= min_overlap_ratio
 
 class IdealAnswerGenerator:
     @staticmethod
@@ -153,8 +167,9 @@ Return ONLY a JSON object matching this schema:
                 continue
                 
             # Grounding check: verify that content mentions or relates to expected notes
-            # Simple soft alignment: if notes are short, we allow, otherwise simple word intersection can flag extreme hallucinations.
-            # Here we enforce a basic safety fallback check.
+            if not _is_grounded(b_content, expected_notes):
+                print(f"[Ideal Answer Grounding Warning] Block {b_id} content failed grounding check and was dropped.")
+                continue
             
             # Citation check: addresses_gap must be one of valid citations, or None.
             # Coerce back to integer if it was stringified
