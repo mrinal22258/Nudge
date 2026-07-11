@@ -504,8 +504,9 @@ Return ONLY a valid JSON object matching the following structure:
     except Exception as e:
         print(f"[Dynamic Question Gen Error] {e}")
         # Fallback question
+        import random
         typed_questions = [q for q in QUESTION_BANK if q["type"] == interview_type]
         if not typed_questions:
             typed_questions = [q for q in QUESTION_BANK if q["type"] == "coding"]
-        return typed_questions[0]
+        return random.choice(typed_questions)
 
