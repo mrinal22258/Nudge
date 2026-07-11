@@ -43,7 +43,7 @@ async function encryptCanvas(serialized: string, roomKey: string, sessionId: str
   const aesKey = await deriveAesKey(roomKey, sessionId);
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const encrypted = await crypto.subtle.encrypt(
-    { name: "AES-GCM", iv: iv },
+    { name: "AES-GCM", iv },
     aesKey,
     new TextEncoder().encode(serialized)
   );
@@ -99,7 +99,7 @@ export default function InterviewApp() {
   const [idealAnswerPlan, setIdealAnswerPlan] = useState<any>(null);
   const [highlightedGap, setHighlightedGap] = useState<number | null>(null);
 
-  const [sessionToken, setSessionToken] = useState<string | null>(null);
+  const [_sessionToken, setSessionToken] = useState<string | null>(null);
   const sessionTokenRef = useRef<string | null>(null);
 
   const updateSessionToken = (token: string | null) => {
@@ -277,7 +277,7 @@ export default function InterviewApp() {
           roomId: newSessionId,
           sessionId: newSessionId,
           token: data.session_token,
-          roomKey: roomKey,
+          roomKey,
         });
       });
 
