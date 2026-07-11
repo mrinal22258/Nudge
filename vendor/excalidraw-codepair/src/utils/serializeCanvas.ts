@@ -78,6 +78,14 @@ export const serializeCanvas = (
       arrows.push(
         `- Arrow${relation} at (${Math.round(el.x)}, ${Math.round(el.y)})`,
       );
+    } else if (el.type === "image") {
+      const rx = Math.round(el.x);
+      const ry = Math.round(el.y);
+      const rw = Math.round(el.width);
+      const rh = Math.round(el.height);
+      shapes.push(
+        `- [Image pasted at (${rx}, ${ry}), size ${rw}x${rh} — image content is not visible to the interviewer, only its position and size]`,
+      );
     }
   });
 
