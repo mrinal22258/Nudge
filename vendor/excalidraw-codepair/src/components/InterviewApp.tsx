@@ -183,6 +183,15 @@ export default function InterviewApp() {
     };
   }, []);
 
+  // Component-unmount socket disconnect cleanup
+  useEffect(() => {
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+      }
+    };
+  }, []);
+
   // Timer count effect
   useEffect(() => {
     if (screen !== "interview") {
@@ -256,6 +265,10 @@ export default function InterviewApp() {
       window.location.hash = `room=${newSessionId},${roomKey}`;
 
       // 3. Setup Socket.io client connection to backend orchestrator
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
       const socket = io(API_BASE);
       socketRef.current = socket;
 
@@ -437,6 +450,10 @@ export default function InterviewApp() {
         setCanvasKey((prev) => prev + 1);
 
         // Setup Socket.io client connection to backend orchestrator for the new scenario
+        if (socketRef.current) {
+          socketRef.current.disconnect();
+          socketRef.current = null;
+        }
         const socket = io(API_BASE);
         socketRef.current = socket;
 
