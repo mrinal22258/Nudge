@@ -11,6 +11,8 @@ if PROJECT_ROOT not in sys.path:
 from backend.database import db
 from backend.weknora_bank import QUESTION_BANK
 
+MAX_CANVAS_CHARS = 2500  # conservative budget within the 4096-token context
+
 def generate_interviewer_turn(session_id: str, is_nudge: bool = False) -> str:
     """Generates the next technical interviewer response (question or nudge) using local Ollama."""
     sess = db.get_session(session_id)
@@ -38,6 +40,12 @@ def generate_interviewer_turn(session_id: str, is_nudge: bool = False) -> str:
         elif entry.get("type") == "user":
             chat_history.append(f"Candidate: {entry.get('content', '')}")
             
+    if len(canvas_transcript) > MAX_CANVAS_CHARS:
+        canvas_transcript = (
+            canvas_transcript[:MAX_CANVAS_CHARS]
+            + "\n... [canvas truncated — whiteboard has more content than shown here]"
+        )
+        
     # Keep context window under budget by using a sliding window for active chat dialogue
     if len(chat_history) > 10:
         chat_history = ["... [Earlier dialogue truncated for context window efficiency] ..."] + chat_history[-10:]

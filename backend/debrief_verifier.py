@@ -18,6 +18,8 @@ def generate_raw_debrief(session: Dict[str, Any]) -> Dict[str, Any]:
     client = ollama.Client(host="http://localhost:11434")
     
     # Format the transcript with indices
+    from backend.interviewer import MAX_CANVAS_CHARS
+
     formatted_transcript = []
     transcript_list = session.get("transcript", [])
     last_canvas_idx = -1
@@ -28,8 +30,14 @@ def generate_raw_debrief(session: Dict[str, Any]) -> Dict[str, Any]:
     for i, entry in enumerate(transcript_list):
         entry_type = entry.get("type", "")
         content = entry.get("content", "")
-        if entry_type == "canvas" and i != last_canvas_idx:
-            content = "[Canvas state snapshot: Shapes updated (content omitted for readability)]"
+        if entry_type == "canvas":
+            if i != last_canvas_idx:
+                content = "[Canvas state snapshot: Shapes updated (content omitted for readability)]"
+            elif len(content) > MAX_CANVAS_CHARS:
+                content = (
+                    content[:MAX_CANVAS_CHARS]
+                    + "\n... [canvas truncated — whiteboard has more content than shown here]"
+                )
 
         formatted_transcript.append(
             f"Index [{entry.get('index')}] - Type: {entry_type} - Timestamp: {entry.get('timestamp')}\n"
