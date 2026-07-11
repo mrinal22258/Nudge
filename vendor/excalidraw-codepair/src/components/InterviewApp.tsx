@@ -99,11 +99,9 @@ export default function InterviewApp() {
   const [idealAnswerPlan, setIdealAnswerPlan] = useState<any>(null);
   const [highlightedGap, setHighlightedGap] = useState<number | null>(null);
 
-  const [_sessionToken, setSessionToken] = useState<string | null>(null);
   const sessionTokenRef = useRef<string | null>(null);
 
   const updateSessionToken = (token: string | null) => {
-    setSessionToken(token);
     sessionTokenRef.current = token;
   };
 
