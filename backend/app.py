@@ -67,6 +67,8 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 # Inactivity tracking: session_id -> datetime of last activity
 session_activity = {}
 
+MAX_UPLOAD_BYTES = 10 * 1024 * 1024  # 10MB, generous for a resume PDF
+
 @app.post("/api/session/create")
 async def create_session(
     resume: UploadFile = File(...),
@@ -75,13 +77,19 @@ async def create_session(
 ):
     """Parses resume + JD, builds target gap profile, selects a question, and creates a session."""
     try:
-        # Save resume PDF locally
+        # Read once, validate, then write — don't trust the client Content-Type header alone
+        content = await resume.read()
+        if len(content) > MAX_UPLOAD_BYTES:
+            raise HTTPException(status_code=413, detail="Resume file too large (10MB limit).")
+        if not content.startswith(b"%PDF-"):
+            raise HTTPException(status_code=400, detail="Uploaded file is not a valid PDF.")
+
         resume_filename = f"resume_{uuid_str()}.pdf"
         resume_path = os.path.join(UPLOAD_DIR, resume_filename)
         
         def save_file():
             with open(resume_path, "wb") as buffer:
-                shutil.copyfileobj(resume.file, buffer)
+                buffer.write(content)
                 
         await asyncio.to_thread(save_file)
 
@@ -90,6 +98,8 @@ async def create_session(
             SessionOrchestrator.create_session, resume_path, jd, interview_type
         )
         return session_data
+    except HTTPException as he:
+        raise he
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Failed to create interview session: {str(e)}")
@@ -301,7 +311,8 @@ async def end_interview(sid, data):
 # --- Background Task: Idle/Stuck Detector (Task 7) ---
 
 async def monitor_inactivity():
-    """Background loop that nudges candidates when they are inactive for >45 seconds."""
+    """Background loop that nudges candidates when they are inactive for >45 seconds and cleans up old resume uploads."""
+    cleanup_counter = 0
     while True:
         await asyncio.sleep(5)
         now = datetime.now()
@@ -322,6 +333,34 @@ async def monitor_inactivity():
             nudge = await asyncio.to_thread(generate_interviewer_turn, sess_id, is_nudge=True)
             SessionOrchestrator.add_transcript_entry(sess_id, "ai", nudge)
             await sio.emit("ai-message", {"content": nudge, "timestamp": datetime.now().isoformat()}, room=r_id)
+
+        # Cleanup files belonging to sessions older than 2 days (check once every 60 seconds / 12 loops)
+        cleanup_counter += 1
+        if cleanup_counter >= 12:
+            cleanup_counter = 0
+            try:
+                sessions = db.list_sessions()
+                for s in sessions:
+                    started_at_str = s.get("started_at")
+                    if started_at_str:
+                        try:
+                            started_at = datetime.fromisoformat(started_at_str)
+                        except ValueError:
+                            continue
+                        if (now - started_at).days >= 2:
+                            candidate_id = s.get("candidate_id")
+                            if candidate_id:
+                                candidate = db.get_candidate(candidate_id)
+                                if candidate:
+                                    resume_path = candidate.get("resume_path")
+                                    if resume_path and os.path.exists(resume_path):
+                                        try:
+                                            os.remove(resume_path)
+                                            print(f"[Cleanup] Deleted old resume file: {resume_path}")
+                                        except Exception as e:
+                                            print(f"[Cleanup Error] Failed to delete {resume_path}: {e}")
+            except Exception as e:
+                print(f"[Cleanup Error] {e}")
 
 if __name__ == "__main__":
     uvicorn.run(socket_app, host="0.0.0.0", port=3002)
