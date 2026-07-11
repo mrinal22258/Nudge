@@ -1,7 +1,15 @@
 import json
 import os
 import threading
+import hmac
+import hashlib
 from typing import Dict, Any, List, Optional
+from backend.secrets_store import get_or_create_server_secret
+
+def _sign_entry(session_id: str, entry: Dict[str, Any]) -> str:
+    secret = get_or_create_server_secret()
+    payload = f"{session_id}|{entry['index']}|{entry['type']}|{entry['timestamp']}|{entry['content']}".encode("utf-8")
+    return hmac.new(secret, payload, hashlib.sha256).hexdigest()
 
 DB_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "db.json"))
 
@@ -102,6 +110,7 @@ class LocalDB:
                     "type": entry_type,
                     "content": content
                 }
+                entry["signature"] = _sign_entry(session_id, entry)
                 sess["transcript"].append(entry)
                 self._write_db(db)
                 return entry

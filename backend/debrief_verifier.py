@@ -2,6 +2,8 @@ import json
 import os
 import sys
 from typing import Dict, Any, List
+import hmac
+from backend.database import _sign_entry
 
 # Ensure project root is in path
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -117,19 +119,34 @@ def verify_debrief_citations(session: Dict[str, Any], raw_debrief: Dict[str, Any
         verdict = section.get("verdict", "")
         citations = section.get("citations", [])
         
-        # 1. Filter out-of-bounds citations (deterministic verifier check)
-        valid_citations = [c for c in citations if c in valid_indices]
+        # 1. Filter out-of-bounds citations and verify signatures (tamper-evidence)
+        valid_citations = []
+        for c in citations:
+            if c in valid_indices:
+                entry = next((e for e in transcript if e["index"] == c), None)
+                if entry:
+                    expected_sig = _sign_entry(session.get("id"), entry)
+                    provided_sig = entry.get("signature")
+                    if provided_sig and hmac.compare_digest(provided_sig, expected_sig):
+                        valid_citations.append(c)
+                    else:
+                        print(f"[Verification Warning] Signature mismatch or missing for citation index {c}")
         
         # If citations were modified or dropped, we add a verification notice
         if len(valid_citations) < len(citations):
             verdict += " (Note: Some ungrounded citations were removed by the verifier.)"
             
         # 2. Semantic grounding check: verify if the cited entries correspond to the section topic
+        # and verify with Ollama
         final_citations = []
+        import ollama
+        client = ollama.Client(host="http://localhost:11434")
+        
         for c in valid_citations:
             entry = next((e for e in transcript if e["index"] == c), None)
             if entry:
-                content_lower = (entry.get("content") or "").lower()
+                content = entry.get("content") or ""
+                content_lower = content.lower()
                 entry_type = entry.get("type")
                 is_valid_semantic = False
                 
@@ -165,8 +182,35 @@ def verify_debrief_citations(session: Dict[str, Any], raw_debrief: Dict[str, Any
                         if any(kw in content_lower for kw in solve_keywords):
                             is_valid_semantic = True
                 
+                # Second pass semantic check via Ollama YES/NO call
                 if is_valid_semantic:
-                    final_citations.append(c)
+                    prompt = f"""Does this specific transcript entry support this specific verdict sentence?
+Transcript Entry: "{content}"
+Verdict: "{verdict}"
+Answer only YES or NO."""
+                    try:
+                        resp = client.chat(
+                            model="qwen2.5:3b",
+                            messages=[
+                                {"role": "system", "content": "You are a binary verification assistant. Reply only with YES or NO."},
+                                {"role": "user", "content": prompt}
+                            ],
+                            options={"temperature": 0.1, "num_ctx": 4096}
+                        )
+                        ans = resp["message"]["content"].strip().upper()
+                        if "<think>" in ans:
+                            think_end = ans.find("</think>")
+                            if think_end != -1:
+                                ans = ans[think_end + 8:].strip().upper()
+                        
+                        if "YES" in ans:
+                            final_citations.append(c)
+                        else:
+                            print(f"[Verification] Citation index {c} failed semantic verification. Model answer: {ans}")
+                    except Exception as e:
+                        print(f"[Verification Error] Semantic check failed for citation {c}: {e}")
+                        # Fallback
+                        final_citations.append(c)
                     
         # If a section ends up with NO citations, we flag it as 'unverified'
         if not final_citations and transcript:
