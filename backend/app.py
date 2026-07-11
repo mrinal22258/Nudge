@@ -33,6 +33,7 @@ from backend.orchestrator import SessionOrchestrator
 from backend.interviewer import generate_interviewer_turn
 from backend.debrief_verifier import generate_and_verify_debrief
 from backend.ideal_answer import IdealAnswerGenerator
+from backend.weknora_bank import personalize_question
 
 # Configure CORS to allow frontend connections (restrict to localhost dev ports)
 origins = [
@@ -161,6 +162,18 @@ async def load_next_scenario(session_id: str, sess: dict = Depends(verify_sessio
         next_idx = idx + 1
         next_q = matched[next_idx]
         
+        if not next_q.get("personalized"):
+            print("[App] Personalizing next scenario question for this candidate/JD...")
+            cand = db.get_candidate(sess["candidate_id"]) or {}
+            target = db.get_job_target(sess["job_target_id"]) or {}
+            resume_structured = cand.get("resume_structured", {})
+            jd_structured = target.get("jd_structured", {})
+            gap_profile = target.get("gap_profile", [])
+
+            next_q = personalize_question(next_q, resume_structured, jd_structured, gap_profile)
+            matched[next_idx] = next_q  # persist the personalized version back into the session's matched list
+            sess["matched_questions"] = matched
+            
         # Reset session properties for the next scenario
         sess["current_question_index"] = next_idx
         sess["question_id"] = next_q["id"]
@@ -265,11 +278,13 @@ async def join_room(sid, data):
             }
             
             # AI introduces itself and asks the initial question
+            personalization_note = sess.get("question_details", {}).get("personalization_note", "")
+            note_suffix = f"\n\n_{personalization_note}_" if personalization_note else ""
             welcome_text = (
                 f"Hello! I am your interviewer today. I have reviewed your profile against the role, "
                 f"and selected a technical question for you: \n\n**{sess.get('question_prompt', '')}**\n\n"
                 f"Please use the Nudge whiteboard to draw out your system design, write your code, "
-                f"and explain your thought process."
+                f"and explain your thought process.{note_suffix}"
             )
             SessionOrchestrator.add_transcript_entry(session_id, "ai", welcome_text)
             await sio.emit("ai-message", {"content": welcome_text, "timestamp": datetime.now().isoformat()}, room=room_id)

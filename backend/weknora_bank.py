@@ -510,3 +510,90 @@ Return ONLY a valid JSON object matching the following structure:
             typed_questions = [q for q in QUESTION_BANK if q["type"] == "coding"]
         return random.choice(typed_questions)
 
+
+def personalize_question(
+    seed_question: Dict[str, Any],
+    resume_structured: Dict[str, Any],
+    jd_structured: Dict[str, Any],
+    gap_profile: Any,
+) -> Dict[str, Any]:
+    """Rewrites a seed bank question's framing to reference the specific candidate's resume and target JD,
+    while preserving the seed's core technical challenge, type, and difficulty. Falls back to the
+    unmodified seed on any generation failure."""
+    import ollama
+    import uuid
+    import copy
+    import json
+
+    client = ollama.Client(host="http://localhost:11434")
+
+    prompt = f"""You are adapting an existing mock interview question so it feels tailored to a specific candidate and job, WITHOUT changing the underlying technical problem being tested.
+
+Original seed question:
+- Topic: {seed_question.get('topic')}
+- Type: {seed_question.get('type')}
+- Prompt: {seed_question.get('prompt_text')}
+
+Candidate's background (resume):
+{json.dumps(resume_structured, indent=2)}
+
+Target job description:
+{json.dumps(jd_structured, indent=2)}
+
+Candidate's identified gaps for this interview:
+{json.dumps(gap_profile, indent=2)}
+
+Your task: rewrite ONLY the scenario framing of the prompt — the company/product context, the systems or domain it's set in, any named technologies — so it reads as if it were written specifically for this candidate and this job. Reference something concrete from their resume or the JD if it fits naturally.
+
+Hard constraints — do NOT violate these:
+1. The core technical challenge, required algorithm/architecture class, and difficulty level MUST remain identical to the seed. If the seed is a rate limiter design question, your output must still be a rate limiter design question — you may change what it's rate-limiting (e.g. "per-merchant API calls on a payments platform" instead of the generic version), not what's being tested.
+2. Do not make the question easier or harder than the seed.
+3. Do not invent a different problem entirely.
+4. Keep it roughly the same length as the original prompt.
+
+Return ONLY a valid JSON object:
+{{
+  "personalized_prompt_text": "The rewritten prompt text",
+  "personalization_note": "One sentence: what candidate/JD detail you referenced and why"
+}}"""
+
+    fallback = copy.deepcopy(seed_question)
+    fallback["personalized"] = False
+
+    try:
+        response = client.chat(
+            model="qwen2.5:3b",
+            messages=[
+                {"role": "system", "content": "You are a precise interview question adapter. Return only valid JSON matching the requested schema. Never change the underlying technical problem."},
+                {"role": "user", "content": prompt}
+            ],
+            options={"temperature": 0.3, "num_ctx": 4096},
+            format="json"
+        )
+        content = response["message"]["content"].strip()
+        if "<think>" in content:
+            think_end = content.find("</think>")
+            if think_end != -1:
+                content = content[think_end + 8:].strip()
+        result = json.loads(content)
+
+        new_prompt = result.get("personalized_prompt_text", "").strip()
+        # Sanity checks — cheap, not a semantic-equivalence guarantee (that would need a real
+        # verifier pass, out of scope here). Just enough to catch obviously broken output.
+        if not new_prompt or len(new_prompt) < 20:
+            return fallback
+
+        personalized = copy.deepcopy(seed_question)
+        personalized["id"] = f"personalized_{uuid.uuid4()}"
+        personalized["source_question_id"] = seed_question.get("id")
+        personalized["prompt_text"] = new_prompt
+        personalized["personalization_note"] = result.get("personalization_note", "")
+        personalized["personalized"] = True
+        # expected_approach_notes, type, difficulty, topic are intentionally NOT overwritten —
+        # the grading rubric and technical scope stay anchored to the vetted seed.
+        return personalized
+
+    except Exception as e:
+        print(f"[Personalize Question Error] {e}")
+        return fallback
+

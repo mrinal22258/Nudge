@@ -11,7 +11,7 @@ if PROJECT_ROOT not in sys.path:
 
 from backend.database import db
 from backend.parser import parse_resume_file, parse_jd_text, build_gap_profile
-from backend.weknora_bank import retrieve_top_questions, generate_dynamic_question
+from backend.weknora_bank import retrieve_top_questions, generate_dynamic_question, personalize_question
 
 class SessionOrchestrator:
     @staticmethod
@@ -52,6 +52,11 @@ class SessionOrchestrator:
             dynamic_q = generate_dynamic_question(resume_structured, jd_structured, gap_profile, interview_type)
             matched_questions = [dynamic_q]
             
+        # Personalize only the first (immediately used) question — lazy, so we don't pay
+        # personalization cost for scenarios the candidate may never reach.
+        print("[Orchestrator] Personalizing first matched question for this candidate/JD...")
+        matched_questions[0] = personalize_question(matched_questions[0], resume_structured, jd_structured, gap_profile)
+        
         question = matched_questions[0]
         
         # 5. Initialize Session
