@@ -277,29 +277,59 @@ QUESTION_BANK = [
     }
 ]
 
-def get_cosine_similarity(text1: str, text2: str) -> float:
-    """Compare similarity between two texts using a lightweight token cosine similarity vectorizer."""
-    def tokenize(text):
-        return re.findall(r'\w+', text.lower())
+import math
+from collections import Counter
+
+STOPWORDS = {
+    "the", "a", "an", "and", "of", "to", "in", "is", "for", "that", "it", "on", "with",
+    "as", "at", "by", "be", "this", "are", "from", "or", "you", "your", "can", "we", "us"
+}
+
+def tokenize(text: str) -> List[str]:
+    tokens = re.findall(r'\w+', text.lower())
+    return [t for t in tokens if t not in STOPWORDS]
+
+def _build_idf(corpus_texts: List[str]) -> Dict[str, float]:
+    doc_count = len(corpus_texts)
+    df = Counter()
+    for text in corpus_texts:
+        for term in set(tokenize(text)):
+            df[term] += 1
+    return {term: math.log((1 + doc_count) / (1 + freq)) + 1 for term, freq in df.items()}
+
+# Build corpus text and IDF cache at module load
+q_texts = []
+for q in QUESTION_BANK:
+    parts = [q.get("topic", ""), q.get("prompt_text", "")]
+    if "expected_approach_notes" in q:
+        parts.append(q["expected_approach_notes"])
+    if "expected_notes" in q:
+        parts.append(q["expected_notes"])
+    q_texts.append(" ".join(parts))
+
+IDF_CACHE = _build_idf(q_texts)
+
+def get_tfidf_cosine_similarity(text1: str, text2: str, idf: Dict[str, float]) -> float:
+    def tf_vector(text):
+        tokens = tokenize(text)
+        tf = Counter(tokens)
+        return {term: count * idf.get(term, 1.0) for term, count in tf.items()}
     
-    words1 = tokenize(text1)
-    words2 = tokenize(text2)
-    if not words1 or not words2:
+    v1, v2 = tf_vector(text1), tf_vector(text2)
+    if not v1 or not v2:
         return 0.0
+        
+    dot_product = sum(v1[t] * v2.get(t, 0.0) for t in v1)
+    norm1 = math.sqrt(sum(v**2 for v in v1.values()))
+    norm2 = math.sqrt(sum(v**2 for v in v2.values()))
     
-    from collections import Counter
-    import math
-    
-    c1 = Counter(words1)
-    c2 = Counter(words2)
-    
-    dot_product = sum(c1[w] * c2[w] for w in c2 if w in c1)
-    norm1 = math.sqrt(sum(v**2 for v in c1.values()))
-    norm2 = math.sqrt(sum(v**2 for v in c2.values()))
-    
-    if norm1 == 0 or norm2 == 0:
+    if norm1 == 0.0 or norm2 == 0.0:
         return 0.0
     return dot_product / (norm1 * norm2)
+
+def get_cosine_similarity(text1: str, text2: str) -> float:
+    """Compare similarity between two texts using a lightweight TF-IDF cosine similarity."""
+    return get_tfidf_cosine_similarity(text1, text2, IDF_CACHE)
 
 def retrieve_question(gap_profile: Any, interview_type: str) -> Dict[str, Any]:
     """Retrieve the most relevant question from the seed bank based on gap profile and interview type."""
