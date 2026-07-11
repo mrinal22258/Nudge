@@ -11,3 +11,4 @@ powershell.cmd
 OllamaSetup.exe
 uploads/
 db.json
+.nudge_secret
